@@ -35,6 +35,15 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 var app = builder.Build();
 
+// Seed inicial (solo en Development). La migración se aplica aparte con dotnet ef;
+// aquí solo se insertan datos. Es idempotente: no duplica si ya hay datos.
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await SeedData.SeedAsync(db);
+}
+
 // ---------------------------------------------------------------------------
 // HTTP request pipeline
 // ---------------------------------------------------------------------------
@@ -55,5 +64,20 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Health-check: verifica la conexión a la base de datos.
+app.MapGet("/health", async (AppDbContext db) =>
+{
+    try
+    {
+        return await db.Database.CanConnectAsync()
+            ? Results.Ok(new { status = "ok", database = "connected" })
+            : Results.Json(new { status = "error", database = "disconnected" }, statusCode: 503);
+    }
+    catch
+    {
+        return Results.Json(new { status = "error", database = "disconnected" }, statusCode: 503);
+    }
+});
 
 app.Run();
