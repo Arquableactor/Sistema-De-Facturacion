@@ -7,7 +7,8 @@ namespace ArquaBilling.Api.Data;
 public static class SeedData
 {
     // Datos iniciales. Idempotente: si ya hay usuarios, no hace nada.
-    public static async Task SeedAsync(AppDbContext db)
+    // El PasswordHasher viene de DI (mismo que usa AuthService para verificar).
+    public static async Task SeedAsync(AppDbContext db, PasswordHasher<User> hasher)
     {
         if (await db.Users.AnyAsync())
         {
@@ -16,8 +17,6 @@ public static class SeedData
 
         var now = DateTime.UtcNow;
 
-        // TODO: el hashing de contraseñas migrará a AuthService cuando se implemente Auth.
-        var hasher = new PasswordHasher<User>();
         var admin = new User
         {
             FullName = "Administrador",

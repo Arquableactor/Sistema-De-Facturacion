@@ -1,5 +1,14 @@
+using System.Text;
 using ArquaBilling.Api.Data;
+using ArquaBilling.Api.Entities;
+using ArquaBilling.Api.Helpers;
+using ArquaBilling.Api.Interfaces;
+using ArquaBilling.Api.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,25 +18,66 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-// Swagger / OpenAPI.
-// Learn more at https://aka.ms/aspnetcore/swashbuckle
+// Swagger / OpenAPI con soporte para Bearer JWT (botón Authorize en la UI).
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    var scheme = new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Pega el token JWT (sin el prefijo 'Bearer ')."
+    };
+    options.AddSecurityDefinition("Bearer", scheme);
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 // Database context (PostgreSQL via Npgsql).
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// TODO: Configure JWT authentication.
-// builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-//     .AddJwtBearer(options => { /* ... */ });
+// Servicios de autenticación.
+builder.Services.AddSingleton<PasswordHasher<User>>();
+builder.Services.AddScoped<JwtHelper>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
-// TODO: Register application services (scoped) and their interfaces.
-// builder.Services.AddScoped<IAuthService, AuthService>();
-// builder.Services.AddScoped<IInvoiceService, InvoiceService>();
-// builder.Services.AddScoped<IPaymentService, PaymentService>();
-// builder.Services.AddScoped<IWarrantyService, WarrantyService>();
-// builder.Services.AddScoped<IPdfService, PdfService>();
+// JWT Bearer. La clave (Jwt:Key) viene de user-secrets en Development.
+var jwtKey = builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException("Falta Jwt:Key (configúrala en user-secrets).");
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ClockSkew = TimeSpan.FromMinutes(1)
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 // TODO: Configure CORS (allow the React web app and the Flutter mobile app).
 // builder.Services.AddCors(options =>
@@ -41,7 +91,8 @@ if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await SeedData.SeedAsync(db);
+    var hasher = scope.ServiceProvider.GetRequiredService<PasswordHasher<User>>();
+    await SeedData.SeedAsync(db, hasher);
 }
 
 // ---------------------------------------------------------------------------
@@ -56,11 +107,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// TODO: Enable CORS once the policy above is configured.
-// app.UseCors();
-
-// TODO: Enable authentication once JWT is configured.
-// app.UseAuthentication();
+// El orden importa: autenticar primero, autorizar después.
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

@@ -1,6 +1,9 @@
+using ArquaBilling.Api.DTOs.Auth;
+
 namespace ArquaBilling.Api.Interfaces;
 
 public interface IAuthService
 {
-    // TODO: Define service contract later.
+    // Devuelve el LoginResponse con el token si las credenciales son válidas; null si no.
+    Task<LoginResponse?> LoginAsync(LoginRequest request);
 }
