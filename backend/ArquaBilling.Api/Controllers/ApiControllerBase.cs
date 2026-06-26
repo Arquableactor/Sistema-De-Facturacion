@@ -13,6 +13,7 @@ public abstract class ApiControllerBase : ControllerBase
     {
         ResultStatus.NotFound => NotFound(new ErrorResponse(result.Error ?? "No encontrado.")),
         ResultStatus.Conflict => Conflict(new ErrorResponse(result.Error ?? "Conflicto.")),
+        ResultStatus.Validation => BadRequest(new ErrorResponse(result.Error ?? "Solicitud inválida.")),
         _ => StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse("Error interno."))
     };
 }

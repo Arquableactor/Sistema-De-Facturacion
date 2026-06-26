@@ -82,6 +82,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 // Servicios de negocio.
 builder.Services.AddScoped<IClientService, ClientService>();
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 
 // JWT Bearer. La clave (Jwt:Key) viene de user-secrets en Development.
 var jwtKey = builder.Configuration["Jwt:Key"]

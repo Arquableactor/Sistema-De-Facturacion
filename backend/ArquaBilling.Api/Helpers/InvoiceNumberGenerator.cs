@@ -1,6 +1,8 @@
 namespace ArquaBilling.Api.Helpers;
 
-public class InvoiceNumberGenerator
+// Número de factura INTERNO, correlativo, distinto del NCF fiscal. Derivado del Id
+// (único garantizado por la DB). Ej.: Format(123) => "FAC-000123".
+public static class InvoiceNumberGenerator
 {
-    // TODO: Add helper logic later.
+    public static string Format(int invoiceId) => $"FAC-{invoiceId:D6}";
 }
