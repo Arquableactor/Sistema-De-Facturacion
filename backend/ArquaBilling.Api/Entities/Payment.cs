@@ -11,6 +11,11 @@ public class Payment
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; }
 
+    // Anulación lógica: el pago no se borra; se marca y deja de contar para el balance.
+    public bool IsVoided { get; set; }
+    public DateTime? VoidedAt { get; set; }
+    public string? VoidReason { get; set; }
+
     // Navegación
     public Invoice Invoice { get; set; } = null!;
 }
