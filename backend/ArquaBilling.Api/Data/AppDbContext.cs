@@ -12,6 +12,8 @@ public class AppDbContext : DbContext
 
     public DbSet<User> Users => Set<User>();
     public DbSet<Client> Clients => Set<Client>();
+    public DbSet<Project> Projects => Set<Project>();
+    public DbSet<EquipoInstalado> EquiposInstalados => Set<EquipoInstalado>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();
@@ -33,6 +35,8 @@ public class AppDbContext : DbContext
         configurationBuilder.Properties<PaymentMethod>().HaveConversion<string>().HaveMaxLength(20);
         configurationBuilder.Properties<WarrantyStatus>().HaveConversion<string>().HaveMaxLength(20);
         configurationBuilder.Properties<WarrantyItemStatus>().HaveConversion<string>().HaveMaxLength(20);
+        configurationBuilder.Properties<ProjectStage>().HaveConversion<string>().HaveMaxLength(20);
+        configurationBuilder.Properties<EquipmentCategory>().HaveConversion<string>().HaveMaxLength(20);
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -59,14 +63,61 @@ public class AppDbContext : DbContext
             e.Property(c => c.InstallationAddress).HasMaxLength(300);
         });
 
-        // ----- Product -----
+        // ----- Product (catálogo de equipos) -----
         modelBuilder.Entity<Product>(e =>
         {
             e.Property(p => p.Name).HasMaxLength(200);
             e.Property(p => p.Code).HasMaxLength(50);
             e.Property(p => p.Barcode).HasMaxLength(50);
             e.Property(p => p.Description).HasMaxLength(500);
+            e.Property(p => p.Marca).HasMaxLength(100);
+            e.Property(p => p.Modelo).HasMaxLength(100);
+            e.Property(p => p.Especificacion).HasMaxLength(500);
             e.HasIndex(p => p.Code).IsUnique();
+        });
+
+        // ----- Project -----
+        modelBuilder.Entity<Project>(e =>
+        {
+            e.Property(p => p.Nombre).HasMaxLength(200);
+            e.Property(p => p.Notes).HasMaxLength(1000);
+
+            e.HasOne(p => p.Client)
+                .WithMany(c => c.Projects)
+                .HasForeignKey(p => p.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(p => p.Responsable)
+                .WithMany(u => u.ProjectsResponsable)
+                .HasForeignKey(p => p.ResponsableId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ----- EquipoInstalado -----
+        modelBuilder.Entity<EquipoInstalado>(e =>
+        {
+            e.Property(eq => eq.SerialNumber).HasMaxLength(100);
+            e.Property(eq => eq.Marca).HasMaxLength(100);
+            e.Property(eq => eq.Modelo).HasMaxLength(100);
+
+            // Un equipo físico es único: serial único global.
+            e.HasIndex(eq => eq.SerialNumber).IsUnique();
+
+            e.HasOne(eq => eq.Product)
+                .WithMany(p => p.EquiposInstalados)
+                .HasForeignKey(eq => eq.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Si se borra el proyecto, se borran sus equipos instalados.
+            e.HasOne(eq => eq.Project)
+                .WithMany(p => p.EquiposInstalados)
+                .HasForeignKey(eq => eq.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(eq => eq.Client)
+                .WithMany(c => c.EquiposInstalados)
+                .HasForeignKey(eq => eq.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ----- Invoice -----
@@ -79,6 +130,12 @@ public class AppDbContext : DbContext
             e.HasIndex(i => i.InvoiceNumber).IsUnique();
             // NCF único pero permite múltiples nulos (índice parcial filtrado).
             e.HasIndex(i => i.NCF).IsUnique().HasFilter("\"NCF\" IS NOT NULL");
+
+            // Toda factura pertenece a un proyecto (ProjectId NOT NULL).
+            e.HasOne(i => i.Project)
+                .WithMany(p => p.Invoices)
+                .HasForeignKey(i => i.ProjectId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             e.HasOne(i => i.Client)
                 .WithMany(c => c.Invoices)
@@ -95,7 +152,6 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<InvoiceItem>(e =>
         {
             e.Property(ii => ii.Description).HasMaxLength(500);
-            e.Property(ii => ii.SerialNumber).HasMaxLength(100);
 
             e.HasOne(ii => ii.Invoice)
                 .WithMany(i => i.Items)
@@ -113,6 +169,7 @@ public class AppDbContext : DbContext
         {
             e.Property(p => p.Reference).HasMaxLength(100);
             e.Property(p => p.Notes).HasMaxLength(1000);
+            e.Property(p => p.VoidReason).HasMaxLength(500);
 
             e.HasOne(p => p.Invoice)
                 .WithMany(i => i.Payments)
@@ -124,13 +181,16 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Warranty>(e =>
         {
             e.Property(w => w.WarrantyNumber).HasMaxLength(30);
+            e.Property(w => w.VerificationCode).HasMaxLength(64);
             e.Property(w => w.Notes).HasMaxLength(1000);
 
             e.HasIndex(w => w.WarrantyNumber).IsUnique();
+            e.HasIndex(w => w.VerificationCode).IsUnique();
 
-            e.HasOne(w => w.Invoice)
-                .WithMany(i => i.Warranties)
-                .HasForeignKey(w => w.InvoiceId)
+            // La garantía cuelga del proyecto (no de la factura).
+            e.HasOne(w => w.Project)
+                .WithMany(p => p.Warranties)
+                .HasForeignKey(w => w.ProjectId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             e.HasOne(w => w.Client)
@@ -142,17 +202,19 @@ public class AppDbContext : DbContext
         // ----- WarrantyItem -----
         modelBuilder.Entity<WarrantyItem>(e =>
         {
-            e.Property(wi => wi.ProductName).HasMaxLength(200);
             e.Property(wi => wi.SerialNumber).HasMaxLength(100);
+            e.Property(wi => wi.Marca).HasMaxLength(100);
+            e.Property(wi => wi.Modelo).HasMaxLength(100);
 
             e.HasOne(wi => wi.Warranty)
                 .WithMany(w => w.Items)
                 .HasForeignKey(wi => wi.WarrantyId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            e.HasOne(wi => wi.Product)
-                .WithMany(p => p.WarrantyItems)
-                .HasForeignKey(wi => wi.ProductId)
+            // Cubre un equipo instalado concreto (Restrict: no borrar el equipo si tiene garantía).
+            e.HasOne(wi => wi.EquipoInstalado)
+                .WithMany(eq => eq.WarrantyItems)
+                .HasForeignKey(wi => wi.EquipoInstaladoId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 

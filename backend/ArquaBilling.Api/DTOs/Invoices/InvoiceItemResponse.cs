@@ -8,5 +8,4 @@ public record InvoiceItemResponse(
     decimal UnitPrice,
     decimal Discount,
     decimal Itbis,
-    decimal LineTotal,
-    string? SerialNumber);
+    decimal LineTotal);

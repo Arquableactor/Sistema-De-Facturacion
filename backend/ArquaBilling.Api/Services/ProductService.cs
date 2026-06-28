@@ -56,6 +56,10 @@ public class ProductService : IProductService
             Price = request.Price,
             WarrantyMonths = request.WarrantyMonths,
             IsSerialized = request.IsSerialized,
+            Categoria = request.Categoria,
+            Marca = NormalizeOptional(request.Marca),
+            Modelo = NormalizeOptional(request.Modelo),
+            Especificacion = NormalizeOptional(request.Especificacion),
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
@@ -85,6 +89,10 @@ public class ProductService : IProductService
         product.Price = request.Price;
         product.WarrantyMonths = request.WarrantyMonths;
         product.IsSerialized = request.IsSerialized;
+        product.Categoria = request.Categoria;
+        product.Marca = NormalizeOptional(request.Marca);
+        product.Modelo = NormalizeOptional(request.Modelo);
+        product.Especificacion = NormalizeOptional(request.Especificacion);
         product.IsActive = request.IsActive;
 
         return await SaveAndReturnAsync(product);
@@ -129,5 +137,5 @@ public class ProductService : IProductService
 
     private static ProductResponse ToResponse(Product p) => new(
         p.Id, p.Name, p.Code, p.Barcode, p.Description, p.Price, p.WarrantyMonths,
-        p.IsSerialized, p.IsActive, p.CreatedAt);
+        p.IsSerialized, p.Categoria, p.Marca, p.Modelo, p.Especificacion, p.IsActive, p.CreatedAt);
 }

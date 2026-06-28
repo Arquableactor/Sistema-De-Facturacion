@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using ArquaBilling.Api.Entities;
 
 namespace ArquaBilling.Api.DTOs.Products;
 
@@ -23,6 +24,18 @@ public class ProductUpdateRequest
     public int WarrantyMonths { get; set; }
 
     public bool IsSerialized { get; set; }
+
+    // Catálogo de equipos (opcional).
+    public EquipmentCategory? Categoria { get; set; }
+
+    [MaxLength(100)]
+    public string? Marca { get; set; }
+
+    [MaxLength(100)]
+    public string? Modelo { get; set; }
+
+    [MaxLength(500)]
+    public string? Especificacion { get; set; }
 
     // PUT = reemplazo completo del recurso (incluye el estado activo/inactivo).
     public bool IsActive { get; set; }

@@ -12,4 +12,5 @@ public class User
 
     // Navegación
     public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
+    public ICollection<Project> ProjectsResponsable { get; set; } = new List<Project>();
 }

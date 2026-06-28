@@ -11,7 +11,6 @@ public class InvoiceItem
     public decimal Discount { get; set; }
     public decimal Itbis { get; set; }
     public decimal LineTotal { get; set; }
-    public string? SerialNumber { get; set; }
 
     // Navegación
     public Invoice Invoice { get; set; } = null!;

@@ -13,12 +13,10 @@ public class InvoiceService : IInvoiceService
     private const decimal ItbisRate = 0.18m; // ITBIS RD 18%. TODO: soportar productos exentos.
 
     private readonly AppDbContext _db;
-    private readonly IClientService _clients;
 
-    public InvoiceService(AppDbContext db, IClientService clients)
+    public InvoiceService(AppDbContext db)
     {
         _db = db;
-        _clients = clients;
     }
 
     public async Task<IReadOnlyList<InvoiceListItem>> GetAllAsync(InvoiceStatus? status = null, int? clientId = null)
@@ -34,9 +32,10 @@ public class InvoiceService : IInvoiceService
         }
 
         var invoices = await query.OrderByDescending(i => i.Id).ToListAsync();
+        var now = DateTime.UtcNow;
         return invoices.Select(i => new InvoiceListItem(
-            i.Id, i.InvoiceNumber, i.NCF, i.ClientId, i.Client.Name,
-            i.Date, i.Total, i.Balance, i.Status, i.CreatedAt)).ToList();
+            i.Id, i.InvoiceNumber, i.NCF, i.ProjectId, i.ClientId, i.Client.Name,
+            i.Date, i.DueDate, i.Total, i.Balance, i.Status, IsOverdue(i, now), i.CreatedAt)).ToList();
     }
 
     public async Task<ServiceResult<InvoiceResponse>> GetByIdAsync(int id)
@@ -53,49 +52,25 @@ public class InvoiceService : IInvoiceService
 
     public async Task<ServiceResult<InvoiceResponse>> CreateAsync(InvoiceCreateRequest request, int currentUserId)
     {
-        // Exactamente uno de ClientId / NewClient.
-        var hasClientId = request.ClientId.HasValue;
-        var hasNewClient = request.NewClient is not null;
-        if (hasClientId == hasNewClient)
-        {
-            return ServiceResult<InvoiceResponse>.Validation(
-                "Indica exactamente un cliente: ClientId existente o NewClient nuevo.");
-        }
         if (request.Items.Count == 0)
         {
             return ServiceResult<InvoiceResponse>.Validation("La factura debe tener al menos una línea.");
         }
 
-        // Todo-o-nada: cliente al vuelo + factura + líneas en una sola transacción.
+        // Todo-o-nada: factura + líneas en una sola transacción.
         await using var tx = await _db.Database.BeginTransactionAsync();
 
-        // 1) Resolver / crear cliente.
-        int clientId;
-        if (hasClientId)
+        // 1) Resolver el proyecto (obligatorio). El cliente de la factura se deriva del proyecto.
+        var project = await _db.Projects.AsNoTracking().FirstOrDefaultAsync(p => p.Id == request.ProjectId);
+        if (project is null)
         {
-            var client = await _db.Clients.AsNoTracking().FirstOrDefaultAsync(c => c.Id == request.ClientId!.Value);
-            if (client is null)
-            {
-                return ServiceResult<InvoiceResponse>.NotFound("Cliente no encontrado.");
-            }
-            if (!client.IsActive)
-            {
-                return ServiceResult<InvoiceResponse>.Validation("El cliente está inactivo.");
-            }
-            clientId = client.Id;
+            return ServiceResult<InvoiceResponse>.NotFound("Proyecto no encontrado.");
         }
-        else
+        if (!project.IsActive)
         {
-            // TODO fiscal: validar tipo de documento del cliente vs tipo de NCF (B01 -> RNC).
-            var created = await _clients.CreateAsync(request.NewClient!);
-            if (!created.IsSuccess)
-            {
-                return created.Status == ResultStatus.Conflict
-                    ? ServiceResult<InvoiceResponse>.Conflict(created.Error!)
-                    : ServiceResult<InvoiceResponse>.Validation(created.Error ?? "Cliente inválido.");
-            }
-            clientId = created.Value!.Id;
+            return ServiceResult<InvoiceResponse>.Validation("El proyecto está inactivo.");
         }
+        var clientId = project.ClientId;
 
         // 2) Construir líneas con precio snapshot del producto y calcular montos.
         var items = new List<InvoiceItem>();
@@ -136,8 +111,7 @@ public class InvoiceService : IInvoiceService
                 UnitPrice = unitPrice,
                 Discount = discount,
                 Itbis = itbis,
-                LineTotal = lineTotal,
-                SerialNumber = null
+                LineTotal = lineTotal
             });
 
             subtotal += taxableBase;
@@ -153,9 +127,11 @@ public class InvoiceService : IInvoiceService
             // Placeholder temporal único (<30 chars); se reemplaza por FAC-... tras obtener el Id.
             InvoiceNumber = "TMP-" + Guid.NewGuid().ToString("N")[..24],
             NCF = null,
+            ProjectId = project.Id,
             ClientId = clientId,
             UserId = currentUserId,
             Date = NormalizeToUtc(request.Date) ?? DateTime.UtcNow,
+            DueDate = NormalizeToUtc(request.DueDate)!.Value,
             Subtotal = subtotal,
             Itbis = itbisTotal,
             Discount = discountTotal,
@@ -238,12 +214,17 @@ public class InvoiceService : IInvoiceService
     }
 
     private static InvoiceResponse ToResponse(Invoice i) => new(
-        i.Id, i.InvoiceNumber, i.NCF, i.ClientId, i.Client.Name, i.Client.DocumentNumber,
-        i.UserId, i.Date, i.Subtotal, i.Itbis, i.Discount, i.Total, i.PaidAmount, i.Balance,
-        i.Status, i.Notes, i.CreatedAt,
+        i.Id, i.InvoiceNumber, i.NCF, i.ProjectId, i.ClientId, i.Client.Name, i.Client.DocumentNumber,
+        i.UserId, i.Date, i.DueDate, i.Subtotal, i.Itbis, i.Discount, i.Total, i.PaidAmount, i.Balance,
+        i.Status, IsOverdue(i, DateTime.UtcNow), i.Notes, i.CreatedAt,
         i.Items.OrderBy(it => it.Id).Select(it => new InvoiceItemResponse(
             it.Id, it.ProductId, it.Description, it.Quantity, it.UnitPrice,
-            it.Discount, it.Itbis, it.LineTotal, it.SerialNumber)).ToList());
+            it.Discount, it.Itbis, it.LineTotal)).ToList());
+
+    // "Vencida" no es estado del enum: se deriva. Una factura con saldo (Issued/PartiallyPaid)
+    // cuya fecha de vencimiento ya pasó está vencida.
+    private static bool IsOverdue(Invoice i, DateTime now)
+        => i.Status is InvoiceStatus.Issued or InvoiceStatus.PartiallyPaid && i.DueDate < now;
 
     private static decimal Round(decimal value) => Math.Round(value, 2, MidpointRounding.AwayFromZero);
 

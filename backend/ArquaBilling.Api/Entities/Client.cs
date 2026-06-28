@@ -13,6 +13,8 @@ public class Client
     public bool IsActive { get; set; }
 
     // Navegación
+    public ICollection<Project> Projects { get; set; } = new List<Project>();
     public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
+    public ICollection<EquipoInstalado> EquiposInstalados { get; set; } = new List<EquipoInstalado>();
     public ICollection<Warranty> Warranties { get; set; } = new List<Warranty>();
 }
