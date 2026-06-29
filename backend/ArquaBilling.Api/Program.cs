@@ -87,6 +87,10 @@ builder.Services.AddScoped<IEquipoInstaladoService, EquipoInstaladoService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IWarrantyService, WarrantyService>();
+builder.Services.AddScoped<IPdfService, PdfService>();
+
+// QuestPDF: licencia Community (gratuita, válida para este caso). Debe fijarse al inicio.
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 // JWT Bearer. La clave (Jwt:Key) viene de user-secrets en Development.
 var jwtKey = builder.Configuration["Jwt:Key"]

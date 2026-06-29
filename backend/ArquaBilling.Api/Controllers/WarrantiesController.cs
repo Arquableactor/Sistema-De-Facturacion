@@ -12,10 +12,12 @@ namespace ArquaBilling.Api.Controllers;
 public class WarrantiesController : ApiControllerBase
 {
     private readonly IWarrantyService _service;
+    private readonly IPdfService _pdf;
 
-    public WarrantiesController(IWarrantyService service)
+    public WarrantiesController(IWarrantyService service, IPdfService pdf)
     {
         _service = service;
+        _pdf = pdf;
     }
 
     [HttpPost]
@@ -49,6 +51,16 @@ public class WarrantiesController : ApiControllerBase
     {
         var result = await _service.SearchBySerialAsync(serialNumber);
         return result.IsSuccess ? Ok(result.Value) : MapError(result);
+    }
+
+    // Certificado de garantía en PDF (descarga). Requiere login (hereda [Authorize] de clase).
+    [HttpGet("{id:int}/pdf")]
+    public async Task<IActionResult> GetPdf(int id)
+    {
+        var result = await _pdf.GenerateWarrantyCertificateAsync(id);
+        return result.IsSuccess
+            ? File(result.Value!, "application/pdf", $"Certificado-Garantia-{id}.pdf")
+            : MapError(result);
     }
 
     // El UserId sale del token (claim sub/NameIdentifier), nunca del request.

@@ -140,6 +140,35 @@ public class WarrantyService : IWarrantyService
         return ServiceResult<IReadOnlyList<WarrantyResponse>>.Success(response);
     }
 
+    public async Task<ServiceResult<PublicWarrantyVerificationResponse>> VerifyByCodeAsync(string verificationCode)
+    {
+        var code = verificationCode.Trim();
+        // Solo los items: la respuesta pública NO incluye cliente ni proyecto.
+        var warranty = await _db.Warranties.AsNoTracking()
+            .Include(w => w.Items)
+            .FirstOrDefaultAsync(w => w.VerificationCode == code);
+
+        if (warranty is null)
+        {
+            // 404 genérico: no revelar si el código "casi" existe.
+            return ServiceResult<PublicWarrantyVerificationResponse>.NotFound("Garantía no encontrada.");
+        }
+
+        var now = DateTime.UtcNow;
+        var status = EffectiveStatus(warranty.Status, warranty.EndDate, now);
+        var response = new PublicWarrantyVerificationResponse(
+            warranty.WarrantyNumber,
+            IsValid: status == WarrantyStatus.Active,
+            IsVoided: warranty.Status == WarrantyStatus.Void,
+            Status: status,
+            warranty.StartDate,
+            warranty.EndDate,
+            warranty.Items.OrderBy(i => i.Id).Select(i => new PublicWarrantyItem(
+                i.Marca, i.Modelo, i.SerialNumber, i.WarrantyMonths, i.EndDate)).ToList());
+
+        return ServiceResult<PublicWarrantyVerificationResponse>.Success(response);
+    }
+
     private async Task<WarrantyResponse> LoadResponseAsync(int id)
     {
         var warranty = await QueryWithIncludes().FirstAsync(w => w.Id == id);

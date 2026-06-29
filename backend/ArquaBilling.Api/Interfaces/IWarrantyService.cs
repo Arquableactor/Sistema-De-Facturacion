@@ -15,4 +15,7 @@ public interface IWarrantyService
 
     // Búsqueda por número de serie: ¿este equipo tiene garantía? (técnico en campo).
     Task<ServiceResult<IReadOnlyList<WarrantyResponse>>> SearchBySerialAsync(string serialNumber);
+
+    // Verificación PÚBLICA por VerificationCode (anónima). Devuelve info mínima sin datos del cliente.
+    Task<ServiceResult<PublicWarrantyVerificationResponse>> VerifyByCodeAsync(string verificationCode);
 }
