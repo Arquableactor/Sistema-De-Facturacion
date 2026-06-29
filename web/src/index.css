@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-appbg text-brand-text font-sans antialiased;
+  }
+
+  /* Números y títulos con Space Grotesk donde se pida con .font-display */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
