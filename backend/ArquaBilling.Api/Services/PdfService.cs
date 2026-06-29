@@ -49,6 +49,22 @@ public class PdfService : IPdfService
         return ServiceResult<byte[]>.Success(pdf);
     }
 
+    public async Task<ServiceResult<byte[]>> GenerateInvoiceAsync(int invoiceId)
+    {
+        var invoice = await _db.Invoices.AsNoTracking()
+            .Include(i => i.Client)
+            .Include(i => i.Project)
+            .Include(i => i.Items)
+            .FirstOrDefaultAsync(i => i.Id == invoiceId);
+
+        if (invoice is null)
+        {
+            return ServiceResult<byte[]>.NotFound("Factura no encontrada.");
+        }
+
+        return ServiceResult<byte[]>.Success(BuildInvoice(invoice));
+    }
+
     private static byte[] GenerateQrPng(string url)
     {
         // PngByteQRCode es 100% managed (sin System.Drawing ni libs nativas) -> seguro en Linux.
@@ -212,7 +228,174 @@ public class PdfService : IPdfService
         }).GeneratePdf();
     }
 
+    private static byte[] BuildInvoice(Invoice inv)
+    {
+        var isDraft = inv.Status == InvoiceStatus.Draft;
+        var estado = inv.Status switch
+        {
+            InvoiceStatus.Draft => "Borrador",
+            InvoiceStatus.Issued => "Emitida",
+            InvoiceStatus.PartiallyPaid => "Parcialmente pagada",
+            InvoiceStatus.Paid => "Pagada",
+            _ => "Anulada"
+        };
+
+        return Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(40);
+                page.DefaultTextStyle(x => x.FontSize(10).FontColor(Colors.Grey.Darken4));
+
+                // ---- Encabezado: emisor + identificación de la factura ----
+                page.Header().Column(col =>
+                {
+                    col.Item().Row(row =>
+                    {
+                        row.RelativeItem().Column(c =>
+                        {
+                            c.Item().Text("APE Multiservicios").Bold().FontSize(18).FontColor(Colors.Blue.Darken3);
+                            // TODO: datos fiscales reales del emisor (RNC, dirección, teléfono) cuando exista entidad de empresa.
+                            c.Item().Text("RNC: — · Santo Domingo, R.D.").FontSize(9).FontColor(Colors.Grey.Darken1);
+                        });
+                        row.ConstantItem(200).AlignRight().Column(c =>
+                        {
+                            c.Item().AlignRight().Text("FACTURA").Bold().FontSize(15);
+                            c.Item().AlignRight().Text(inv.InvoiceNumber).SemiBold();
+                            if (!isDraft && !string.IsNullOrWhiteSpace(inv.NCF))
+                            {
+                                c.Item().AlignRight().Text($"NCF: {inv.NCF}").FontSize(10);
+                            }
+                        });
+                    });
+
+                    // Borrador: marca visible y sin validez fiscal (los Draft no llevan NCF).
+                    if (isDraft)
+                    {
+                        col.Item().PaddingTop(6).Background(Colors.Red.Lighten4).Padding(6).AlignCenter()
+                            .Text("BORRADOR — SIN VALIDEZ FISCAL").Bold().FontColor(Colors.Red.Darken2);
+                    }
+
+                    col.Item().PaddingTop(8).LineHorizontal(1).LineColor(Colors.Grey.Lighten1);
+                });
+
+                page.Content().PaddingVertical(12).Column(col =>
+                {
+                    col.Spacing(12);
+
+                    // Cliente + proyecto + fechas
+                    col.Item().Row(row =>
+                    {
+                        row.RelativeItem().Column(c =>
+                        {
+                            c.Item().Text("Cliente").Bold().FontColor(Colors.Grey.Darken2);
+                            c.Item().Text(inv.Client.Name);
+                            c.Item().Text($"{inv.Client.DocumentType}: {inv.Client.DocumentNumber}");
+                            c.Item().Text(inv.Client.InstallationAddress);
+                        });
+                        row.RelativeItem().Column(c =>
+                        {
+                            c.Item().Text("Proyecto").Bold().FontColor(Colors.Grey.Darken2);
+                            c.Item().Text(inv.Project.Nombre);
+                            c.Item().PaddingTop(4).Text(t => { t.Span("Emisión: ").SemiBold(); t.Span(Fecha(inv.Date)); });
+                            c.Item().Text(t => { t.Span("Vencimiento: ").SemiBold(); t.Span(Fecha(inv.DueDate)); });
+                        });
+                    });
+
+                    // Tabla de líneas
+                    col.Item().Table(table =>
+                    {
+                        table.ColumnsDefinition(c =>
+                        {
+                            c.RelativeColumn(4); // Descripción
+                            c.RelativeColumn(1); // Cant.
+                            c.RelativeColumn(2); // P. unit.
+                            c.RelativeColumn(2); // Descuento
+                            c.RelativeColumn(2); // ITBIS
+                            c.RelativeColumn(2); // Total
+                        });
+
+                        table.Header(h =>
+                        {
+                            static IContainer Head(IContainer x) => x.Background(Colors.Blue.Darken3).Padding(5);
+                            h.Cell().Element(Head).Text("Descripción").FontColor(Colors.White).Bold();
+                            h.Cell().Element(Head).AlignRight().Text("Cant.").FontColor(Colors.White).Bold();
+                            h.Cell().Element(Head).AlignRight().Text("P. unit.").FontColor(Colors.White).Bold();
+                            h.Cell().Element(Head).AlignRight().Text("Desc.").FontColor(Colors.White).Bold();
+                            h.Cell().Element(Head).AlignRight().Text("ITBIS").FontColor(Colors.White).Bold();
+                            h.Cell().Element(Head).AlignRight().Text("Total").FontColor(Colors.White).Bold();
+                        });
+
+                        var idx = 0;
+                        foreach (var line in inv.Items.OrderBy(x => x.Id))
+                        {
+                            var bg = idx++ % 2 == 0 ? Colors.White : Colors.Grey.Lighten4;
+                            IContainer Cell(IContainer x) => x.Background(bg).Padding(5);
+                            table.Cell().Element(Cell).Text(line.Description ?? "—");
+                            table.Cell().Element(Cell).AlignRight().Text(line.Quantity.ToString("0.##", Es));
+                            table.Cell().Element(Cell).AlignRight().Text(Money(line.UnitPrice));
+                            table.Cell().Element(Cell).AlignRight().Text(Money(line.Discount));
+                            table.Cell().Element(Cell).AlignRight().Text(Money(line.Itbis));
+                            table.Cell().Element(Cell).AlignRight().Text(Money(line.LineTotal));
+                        }
+                    });
+
+                    // Totales + estado de cobro (caja a la derecha)
+                    col.Item().Row(row =>
+                    {
+                        row.RelativeItem(); // empuja la caja a la derecha
+                        row.ConstantItem(240).Column(box =>
+                        {
+                            void Line(string label, string value, bool bold = false)
+                            {
+                                box.Item().Row(r =>
+                                {
+                                    var l = r.RelativeItem().Text(label);
+                                    var v = r.RelativeItem().AlignRight().Text(value);
+                                    if (bold) { l.Bold(); v.Bold(); }
+                                });
+                            }
+                            Line("Subtotal", Money(inv.Subtotal));
+                            Line("ITBIS (18%)", Money(inv.Itbis));
+                            Line("Descuento", Money(inv.Discount));
+                            box.Item().PaddingVertical(3).LineHorizontal(1).LineColor(Colors.Grey.Lighten1);
+                            Line("Total", Money(inv.Total), bold: true);
+                            box.Item().PaddingTop(6);
+                            Line("Pagado", Money(inv.PaidAmount));
+                            Line("Balance", Money(inv.Balance), bold: true);
+                            box.Item().PaddingTop(4).Row(r =>
+                            {
+                                r.RelativeItem().Text("Estado").FontColor(Colors.Grey.Darken2);
+                                r.RelativeItem().AlignRight().Text(estado).SemiBold();
+                            });
+                        });
+                    });
+
+                    // Notas
+                    if (!string.IsNullOrWhiteSpace(inv.Notes))
+                    {
+                        col.Item().PaddingTop(6).Column(c =>
+                        {
+                            c.Item().Text("Notas").Bold().FontColor(Colors.Grey.Darken2);
+                            c.Item().Text(inv.Notes).FontSize(9).FontColor(Colors.Grey.Darken1);
+                        });
+                    }
+                });
+
+                page.Footer().AlignCenter().Text(t =>
+                {
+                    t.Span("Documento generado el ").FontSize(8).FontColor(Colors.Grey.Medium);
+                    t.Span(Fecha(DateTime.UtcNow)).FontSize(8).FontColor(Colors.Grey.Medium);
+                    t.Span(" · APE Multiservicios").FontSize(8).FontColor(Colors.Grey.Medium);
+                });
+            });
+        }).GeneratePdf();
+    }
+
     private static string Fecha(DateTime d) => d.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+    private static string Money(decimal value) => "RD$ " + value.ToString("N2", Es);
 
     private static WarrantyStatus EffectiveStatus(WarrantyStatus stored, DateTime endDate, DateTime now)
         => stored == WarrantyStatus.Void ? WarrantyStatus.Void

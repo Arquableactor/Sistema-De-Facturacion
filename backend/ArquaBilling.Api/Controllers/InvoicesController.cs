@@ -13,10 +13,12 @@ namespace ArquaBilling.Api.Controllers;
 public class InvoicesController : ApiControllerBase
 {
     private readonly IInvoiceService _service;
+    private readonly IPdfService _pdf;
 
-    public InvoicesController(IInvoiceService service)
+    public InvoicesController(IInvoiceService service, IPdfService pdf)
     {
         _service = service;
+        _pdf = pdf;
     }
 
     [HttpGet]
@@ -50,6 +52,16 @@ public class InvoicesController : ApiControllerBase
     {
         var result = await _service.IssueAsync(id);
         return result.IsSuccess ? Ok(result.Value) : MapError(result);
+    }
+
+    // PDF de la factura (descarga). Siempre requiere login (no hay versión pública).
+    [HttpGet("{id:int}/pdf")]
+    public async Task<IActionResult> GetPdf(int id)
+    {
+        var result = await _pdf.GenerateInvoiceAsync(id);
+        return result.IsSuccess
+            ? File(result.Value!, "application/pdf", $"Factura-{id}.pdf")
+            : MapError(result);
     }
 
     // El UserId sale del token (claim sub/NameIdentifier), nunca del request.
