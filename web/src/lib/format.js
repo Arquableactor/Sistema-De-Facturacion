@@ -13,3 +13,20 @@ export function date(value) {
   const mm = String(d.getMonth() + 1).padStart(2, '0')
   return `${dd}/${mm}/${d.getFullYear()}`
 }
+
+// Garantía: el backend habla MESES; el usuario ve/escribe AÑOS. La conversión vive
+// solo en el front (reutilizable; Garantías también la usará).
+export function yearsToMonths(years) {
+  return Math.round(Number(years || 0) * 12)
+}
+
+export function monthsToYears(months) {
+  return Number(months || 0) / 12
+}
+
+// "120 meses" -> "10 años"; "30" -> "2.5 años". No redondea de forma que pierda el dato.
+export function formatWarranty(months) {
+  const y = monthsToYears(months)
+  const text = Number.isInteger(y) ? String(y) : String(Number(y.toFixed(2)))
+  return `${text} ${y === 1 ? 'año' : 'años'}`
+}

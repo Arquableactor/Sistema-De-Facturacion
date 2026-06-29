@@ -7,6 +7,7 @@ import LoginPage from './pages/LoginPage.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
 import PlaceholderPage from './pages/PlaceholderPage.jsx'
 import ClientsPage from './pages/ClientsPage.jsx'
+import ProductsPage from './pages/ProductsPage.jsx'
 
 export default function App() {
   return (
@@ -23,7 +24,9 @@ export default function App() {
               <Route index element={<DashboardPage />} />
               <Route path="proyectos" element={<PlaceholderPage title="Proyectos" />} />
               <Route path="facturacion" element={<PlaceholderPage title="Facturación" />} />
-              <Route path="equipos" element={<PlaceholderPage title="Equipos" />} />
+              {/* "Equipos" del sidebar = catálogo de productos por ahora; el inventario
+                  de equipos instalados será otra pestaña en el futuro. */}
+              <Route path="equipos" element={<ProductsPage />} />
               <Route path="garantias" element={<PlaceholderPage title="Garantías" />} />
               <Route path="clientes" element={<ClientsPage />} />
             </Route>
