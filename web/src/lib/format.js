@@ -14,6 +14,15 @@ export function date(value) {
   return `${dd}/${mm}/${d.getFullYear()}`
 }
 
+// 'YYYY-MM-DD' de HOY en zona LOCAL (no UTC): toISOString() daría el día UTC y en
+// RD (UTC-4) saltaría a "mañana" de noche. Default para inputs type="date".
+export function today() {
+  const d = new Date()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${mm}-${dd}`
+}
+
 // Garantía: el backend habla MESES; el usuario ve/escribe AÑOS. La conversión vive
 // solo en el front (reutilizable; Garantías también la usará).
 export function yearsToMonths(years) {

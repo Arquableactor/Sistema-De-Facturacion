@@ -79,3 +79,47 @@ export const api = {
   patch: (path, body) => request('PATCH', path, body),
   del: (path) => request('DELETE', path),
 }
+
+// Descarga de binarios (ej. PDF). Mismo Bearer + manejo de 401 que request(), pero
+// devuelve un Blob. Genérico: lo reusan Facturas y Garantías (certificado).
+export async function getBlob(path) {
+  const token = getToken()
+  const headers = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
+  const res = await fetch(path, { headers })
+
+  if (res.status === 401 && token) {
+    clearSession()
+    if (window.location.pathname !== '/login') {
+      window.location.assign('/login')
+    }
+    throw new ApiError('Sesión expirada. Inicia sesión de nuevo.', 401)
+  }
+
+  if (!res.ok) {
+    // El backend puede devolver un envelope JSON de error incluso en endpoints de archivo.
+    let message = 'No se pudo descargar el archivo.'
+    try {
+      const j = await res.json()
+      if (j && j.message) message = j.message
+    } catch {
+      // respuesta sin JSON
+    }
+    throw new ApiError(message, res.status)
+  }
+
+  return res.blob()
+}
+
+// Dispara la descarga de un Blob en el navegador con el nombre dado.
+export function saveBlob(blob, filename) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}

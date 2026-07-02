@@ -5,17 +5,8 @@ import Field from '../../components/ui/Field.jsx'
 import Spinner from '../../components/ui/Spinner.jsx'
 import { getProducts } from '../../api/productsApi.js'
 import { createEquipo } from '../../api/equiposApi.js'
-import { formatWarranty } from '../../lib/format.js'
+import { formatWarranty, today } from '../../lib/format.js'
 import { mapDetails } from '../../lib/apiErrors.js'
-
-// 'YYYY-MM-DD' de HOY en la zona local (no UTC): toISOString() daría el día UTC y en
-// RD (UTC-4) saltaría a "mañana" de noche.
-function today() {
-  const d = new Date()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${d.getFullYear()}-${mm}-${dd}`
-}
 
 // Registrar un equipo instalado en un proyecto. Carga sus opciones (productos activos)
 // al abrir, igual que ProjectFormModal. El backend deriva clientId/marca/modelo/garantía.
