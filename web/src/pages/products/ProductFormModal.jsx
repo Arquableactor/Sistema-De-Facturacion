@@ -4,6 +4,7 @@ import Button from '../../components/ui/Button.jsx'
 import Field from '../../components/ui/Field.jsx'
 import { createProduct, updateProduct } from '../../api/productsApi.js'
 import { monthsToYears, yearsToMonths } from '../../lib/format.js'
+import { mapDetails as mapErrorDetails } from '../../lib/apiErrors.js'
 
 const CATEGORIAS = [
   { value: 'PanelSolar', label: 'Panel solar' },
@@ -39,16 +40,9 @@ function validate(f) {
   return e
 }
 
-// Mapea el envelope de validación del backend a errores por campo. El backend habla
-// "WarrantyMonths" pero el campo de la UI es "years": lo redirigimos.
+// Reusa el mapeo genérico y redirige "warrantyMonths" (backend) al campo "years" (UI).
 function mapDetails(details) {
-  const map = {}
-  if (details && typeof details === 'object') {
-    for (const [k, v] of Object.entries(details)) {
-      const key = k.charAt(0).toLowerCase() + k.slice(1)
-      map[key] = Array.isArray(v) ? v.join(' ') : String(v)
-    }
-  }
+  const map = mapErrorDetails(details)
   if (map.warrantyMonths) {
     map.years = map.warrantyMonths
     delete map.warrantyMonths

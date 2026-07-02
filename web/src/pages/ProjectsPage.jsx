@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import Topbar from '../components/layout/Topbar.jsx'
 import Button from '../components/ui/Button.jsx'
 import Badge from '../components/ui/Badge.jsx'
@@ -10,27 +11,7 @@ import { money } from '../lib/format.js'
 import { getProjects, deleteProject } from '../api/projectsApi.js'
 import ProjectFormModal from './projects/ProjectFormModal.jsx'
 import StageProgressModal from './projects/StageProgressModal.jsx'
-
-const STAGE = {
-  Visita: { label: 'Visita', tone: 'gray' },
-  Diseno: { label: 'Diseño', tone: 'blue' },
-  Permisos: { label: 'Permisos', tone: 'purple' },
-  Montaje: { label: 'Montaje', tone: 'amber' },
-  Conexion: { label: 'Conexión', tone: 'orange' },
-  Finalizado: { label: 'Finalizado', tone: 'green' },
-}
-
-function ProgressBar({ value }) {
-  const v = Math.max(0, Math.min(100, Number(value) || 0))
-  return (
-    <div className="flex items-center gap-2">
-      <div className="h-1.5 w-20 overflow-hidden rounded-full bg-edge">
-        <div className="h-full rounded-full bg-primary" style={{ width: `${v}%` }} />
-      </div>
-      <span className="tabular text-xs text-muted">{v}%</span>
-    </div>
-  )
-}
+import { stageMeta, ProgressBar } from './projects/projectMeta.jsx'
 
 export default function ProjectsPage() {
   const toast = useToast()
@@ -133,10 +114,17 @@ export default function ProjectsPage() {
                 </thead>
                 <tbody>
                   {projects.map((p) => {
-                    const stage = STAGE[p.etapa] || { label: p.etapa, tone: 'gray' }
+                    const stage = stageMeta(p.etapa)
                     return (
                       <tr key={p.id} className="border-t border-edge hover:bg-edge-soft/40">
-                        <td className="px-4 py-3 font-medium text-brand-text">{p.nombre}</td>
+                        <td className="px-4 py-3 font-medium">
+                          <Link
+                            to={`/proyectos/${p.id}`}
+                            className="text-primary hover:underline"
+                          >
+                            {p.nombre}
+                          </Link>
+                        </td>
                         <td className="px-4 py-3 text-muted">{p.clientName}</td>
                         <td className="px-4 py-3 text-right tabular text-muted">{p.capacidadKwp}</td>
                         <td className="px-4 py-3">

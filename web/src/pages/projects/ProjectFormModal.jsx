@@ -6,6 +6,7 @@ import Spinner from '../../components/ui/Spinner.jsx'
 import { createProject, updateProject } from '../../api/projectsApi.js'
 import { getClients } from '../../api/clientsApi.js'
 import { getUsers } from '../../api/usersApi.js'
+import { mapDetails } from '../../lib/apiErrors.js'
 
 export const ETAPAS = [
   { value: 'Visita', label: 'Visita' },
@@ -53,17 +54,6 @@ function validate(f) {
   if (Number.isNaN(num(f.costo)) || num(f.costo) < 0) e.costo = 'Costo inválido (≥ 0).'
   if (Number.isNaN(num(f.presupuesto)) || num(f.presupuesto) < 0) e.presupuesto = 'Presupuesto inválido (≥ 0).'
   return e
-}
-
-function mapDetails(details) {
-  const map = {}
-  if (details && typeof details === 'object') {
-    for (const [k, v] of Object.entries(details)) {
-      const key = k.charAt(0).toLowerCase() + k.slice(1)
-      map[key] = Array.isArray(v) ? v.join(' ') : String(v)
-    }
-  }
-  return map
 }
 
 // Modal de crear/editar proyecto. NOVEDAD: carga sus propias opciones (clientes y

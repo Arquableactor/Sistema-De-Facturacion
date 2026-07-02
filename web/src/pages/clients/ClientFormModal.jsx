@@ -3,6 +3,7 @@ import Modal from '../../components/ui/Modal.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Field from '../../components/ui/Field.jsx'
 import { createClient, updateClient } from '../../api/clientsApi.js'
+import { mapDetails } from '../../lib/apiErrors.js'
 
 const DOC_TYPES = [
   { value: 'Cedula', label: 'Cédula' },
@@ -29,18 +30,6 @@ function validate(f) {
   if (f.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim()))
     e.email = 'Correo electrónico inválido.'
   return e
-}
-
-// Mapea el envelope de validación del backend ({ "Email": ["..."] }) a errores por campo.
-function mapDetails(details) {
-  const map = {}
-  if (details && typeof details === 'object') {
-    for (const [k, v] of Object.entries(details)) {
-      const key = k.charAt(0).toLowerCase() + k.slice(1)
-      map[key] = Array.isArray(v) ? v.join(' ') : String(v)
-    }
-  }
-  return map
 }
 
 // Modal de crear/editar cliente. Plantilla del patrón "form en modal" para otros módulos.
