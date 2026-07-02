@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Topbar from '../components/layout/Topbar.jsx'
 import Button from '../components/ui/Button.jsx'
 import Badge from '../components/ui/Badge.jsx'
@@ -10,14 +10,7 @@ import useApi from '../hooks/useApi.js'
 import { money, date } from '../lib/format.js'
 import { getInvoices, issueInvoice, downloadInvoicePdf } from '../api/invoicesApi.js'
 import { getProjects } from '../api/projectsApi.js'
-
-const STATUS = {
-  Draft: { label: 'Borrador', tone: 'gray' },
-  Issued: { label: 'Emitida', tone: 'blue' },
-  PartiallyPaid: { label: 'Parcial', tone: 'amber' },
-  Paid: { label: 'Pagada', tone: 'green' },
-  Cancelled: { label: 'Anulada', tone: 'red' },
-}
+import { statusMeta } from './invoices/invoiceMeta.js'
 
 const FILTERS = [
   { value: '', label: 'Todos' },
@@ -130,10 +123,14 @@ export default function InvoicesPage() {
                 </thead>
                 <tbody>
                   {invoices.map((inv) => {
-                    const st = STATUS[inv.status] || { label: inv.status, tone: 'gray' }
+                    const st = statusMeta(inv.status)
                     return (
                       <tr key={inv.id} className="border-t border-edge hover:bg-edge-soft/40">
-                        <td className="px-4 py-3 font-medium text-brand-text">{inv.invoiceNumber}</td>
+                        <td className="px-4 py-3 font-medium">
+                          <Link to={`/facturacion/${inv.id}`} className="text-primary hover:underline">
+                            {inv.invoiceNumber}
+                          </Link>
+                        </td>
                         <td className="px-4 py-3 font-mono text-xs text-muted">{inv.ncf || '—'}</td>
                         <td className="px-4 py-3 text-muted">{inv.clientName}</td>
                         <td className="px-4 py-3 text-muted">

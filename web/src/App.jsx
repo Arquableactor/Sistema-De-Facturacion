@@ -12,6 +12,7 @@ import ProjectsPage from './pages/ProjectsPage.jsx'
 import ProjectDetailPage from './pages/ProjectDetailPage.jsx'
 import InvoicesPage from './pages/InvoicesPage.jsx'
 import InvoiceFormPage from './pages/invoices/InvoiceFormPage.jsx'
+import InvoiceDetailPage from './pages/InvoiceDetailPage.jsx'
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
               <Route path="proyectos/:id" element={<ProjectDetailPage />} />
               <Route path="facturacion" element={<InvoicesPage />} />
               <Route path="facturacion/nueva" element={<InvoiceFormPage />} />
+              <Route path="facturacion/:id" element={<InvoiceDetailPage />} />
               {/* "Equipos" del sidebar = catálogo de productos por ahora; el inventario
                   de equipos instalados será otra pestaña en el futuro. */}
               <Route path="equipos" element={<ProductsPage />} />
