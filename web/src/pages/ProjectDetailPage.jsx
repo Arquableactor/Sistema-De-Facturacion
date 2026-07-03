@@ -13,6 +13,7 @@ import ProjectFormModal from './projects/ProjectFormModal.jsx'
 import StageProgressModal from './projects/StageProgressModal.jsx'
 import EquipoFormModal from './projects/EquipoFormModal.jsx'
 import { stageMeta, ProgressBar } from './projects/projectMeta.jsx'
+import ProjectWarrantyBlock from './warranties/ProjectWarrantyBlock.jsx'
 
 function Info({ label, value, children }) {
   return (
@@ -196,11 +197,11 @@ export default function ProjectDetailPage() {
                 </div>
               </div>
 
-              {/* Bloques futuros */}
-              <div className="grid gap-4 sm:grid-cols-2">
-                <FuturePanel title="Facturas del proyecto" />
-                <FuturePanel title="Garantía" />
-              </div>
+              {/* Facturas del proyecto: futuro */}
+              <FuturePanel title="Facturas del proyecto" />
+
+              {/* Garantía: bloque vivo (generar / mostrar / descargar) */}
+              <ProjectWarrantyBlock projectId={project.id} equiposCount={list.length} />
 
               {/* Modales reutilizados */}
               <ProjectFormModal

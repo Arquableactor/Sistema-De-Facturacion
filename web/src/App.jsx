@@ -13,6 +13,7 @@ import ProjectDetailPage from './pages/ProjectDetailPage.jsx'
 import InvoicesPage from './pages/InvoicesPage.jsx'
 import InvoiceFormPage from './pages/invoices/InvoiceFormPage.jsx'
 import InvoiceDetailPage from './pages/InvoiceDetailPage.jsx'
+import GarantiasPage from './pages/GarantiasPage.jsx'
 
 export default function App() {
   return (
@@ -35,7 +36,7 @@ export default function App() {
               {/* "Equipos" del sidebar = catálogo de productos por ahora; el inventario
                   de equipos instalados será otra pestaña en el futuro. */}
               <Route path="equipos" element={<ProductsPage />} />
-              <Route path="garantias" element={<PlaceholderPage title="Garantías" />} />
+              <Route path="garantias" element={<GarantiasPage />} />
               <Route path="clientes" element={<ClientsPage />} />
             </Route>
           </Route>
