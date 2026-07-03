@@ -9,7 +9,7 @@ export default {
         brand: { DEFAULT: '#0E3358', dark: '#0B2440', text: '#0E2A47' },
         primary: { DEFAULT: '#1466D8', soft: '#E7F0FE' },
         green: { DEFAULT: '#18A957', strong: '#0F7A41', soft: '#E7F6EE' },
-        amber: { DEFAULT: '#F5A623', soft: '#FEF4E2' },
+        amber: { DEFAULT: '#F5A623', strong: '#9A6510', soft: '#FEF4E2' },
         danger: { DEFAULT: '#E5484D', strong: '#C0362C', soft: '#FDECEC' },
         purple: { DEFAULT: '#8B5CF6', soft: '#EDE9FC' },
         orange: { DEFAULT: '#E5764D', soft: '#FCEEE8' },

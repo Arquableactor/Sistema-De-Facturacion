@@ -346,7 +346,7 @@ function TotalRow({ label, value, bold }) {
 
 const MONEY_TONE = {
   green: 'text-green-strong',
-  amber: 'text-[#9A6510]',
+  amber: 'text-amber-strong',
   muted: 'text-muted',
 }
 

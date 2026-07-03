@@ -50,7 +50,8 @@ export default function ProjectWarrantyBlock({ projectId, equiposCount }) {
   }
 
   async function copyLink() {
-    const url = `${window.location.origin}/api/public/verify/${current.verificationCode}`
+    // Página pública humana (la que abre el QR del certificado), no la URL de la API.
+    const url = `${window.location.origin}/verificar/${current.verificationCode}`
     try {
       await navigator.clipboard.writeText(url)
       toast.success('Link copiado.')

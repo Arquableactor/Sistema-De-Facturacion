@@ -80,6 +80,27 @@ export const api = {
   del: (path) => request('DELETE', path),
 }
 
+// GET PÚBLICO: sin Bearer y SIN el redirect de 401 (para endpoints anónimos como la
+// verificación de garantía). Devuelve JSON o lanza ApiError con .status (404 se
+// distingue del error de red, que llega con status 0).
+export async function getPublic(path) {
+  let res
+  try {
+    res = await fetch(path, { headers: { Accept: 'application/json' } })
+  } catch {
+    throw new ApiError('No se pudo conectar con el servidor.', 0)
+  }
+
+  const isJson = (res.headers.get('content-type') || '').includes('application/json')
+  const payload = isJson ? await res.json().catch(() => null) : null
+
+  if (!res.ok) {
+    const message = (isJson && payload && payload.message) || 'Ocurrió un error inesperado.'
+    throw new ApiError(message, res.status)
+  }
+  return payload
+}
+
 // Descarga de binarios (ej. PDF). Mismo Bearer + manejo de 401 que request(), pero
 // devuelve un Blob. Genérico: lo reusan Facturas y Garantías (certificado).
 export async function getBlob(path) {

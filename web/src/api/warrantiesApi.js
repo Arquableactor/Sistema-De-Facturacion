@@ -1,4 +1,4 @@
-import { api, getBlob, saveBlob } from './client.js'
+import { api, getBlob, saveBlob, getPublic } from './client.js'
 
 // Garantías. Se generan DESDE un proyecto; no hay editar/anular por API.
 export function getWarranties({ clientId, projectId } = {}) {
@@ -25,4 +25,10 @@ export function searchBySerial(serial) {
 export async function downloadWarrantyPdf(id, warrantyNumber) {
   const blob = await getBlob(`/api/warranties/${id}/pdf`)
   saveBlob(blob, `certificado-${warrantyNumber || id}.pdf`)
+}
+
+// Verificación PÚBLICA (anónima) por verificationCode. Sin token; usada por la
+// página /verificar/:code que abre el QR del certificado.
+export function verifyPublic(code) {
+  return getPublic(`/api/public/verify/${encodeURIComponent(code)}`)
 }

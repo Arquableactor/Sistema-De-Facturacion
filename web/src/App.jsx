@@ -14,6 +14,7 @@ import InvoicesPage from './pages/InvoicesPage.jsx'
 import InvoiceFormPage from './pages/invoices/InvoiceFormPage.jsx'
 import InvoiceDetailPage from './pages/InvoiceDetailPage.jsx'
 import GarantiasPage from './pages/GarantiasPage.jsx'
+import PublicVerifyPage from './pages/PublicVerifyPage.jsx'
 
 export default function App() {
   return (
@@ -21,8 +22,9 @@ export default function App() {
       <AuthProvider>
         <ToastProvider>
           <Routes>
-          {/* Pública */}
+          {/* Públicas (sin login) */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/verificar/:code" element={<PublicVerifyPage />} />
 
           {/* Protegidas: requieren token */}
           <Route element={<ProtectedRoute />}>
