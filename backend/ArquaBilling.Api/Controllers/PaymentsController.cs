@@ -19,6 +19,7 @@ public class PaymentsController : ApiControllerBase
     }
 
     [HttpPost("api/invoices/{invoiceId:int}/payments")]
+    [Authorize(Roles = "Admin,Sales")] // Registrar pago: Admin y Facturación
     public async Task<IActionResult> Add(int invoiceId, PaymentCreateRequest request)
     {
         var userId = GetUserId();
@@ -34,6 +35,7 @@ public class PaymentsController : ApiControllerBase
     }
 
     [HttpPost("api/payments/{paymentId:int}/void")]
+    [Authorize(Roles = "Admin")] // Anular pago: SOLO Admin
     public async Task<IActionResult> Void(int paymentId, VoidPaymentRequest? request = null)
     {
         var userId = GetUserId();

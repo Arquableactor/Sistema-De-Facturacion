@@ -30,6 +30,7 @@ public class ProductsController : ApiControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")] // Catálogo: solo Admin crea/edita/borra; el resto lee
     public async Task<IActionResult> Create(ProductCreateRequest request)
     {
         var result = await _service.CreateAsync(request);
@@ -39,6 +40,7 @@ public class ProductsController : ApiControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Update(int id, ProductUpdateRequest request)
     {
         var result = await _service.UpdateAsync(id, request);
@@ -46,6 +48,7 @@ public class ProductsController : ApiControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _service.DeleteAsync(id);

@@ -33,6 +33,7 @@ public class InvoicesController : ApiControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin,Sales")] // Técnico: facturas solo lectura
     public async Task<IActionResult> Create(InvoiceCreateRequest request)
     {
         var userId = GetUserId();
@@ -48,6 +49,7 @@ public class InvoicesController : ApiControllerBase
     }
 
     [HttpPost("{id:int}/issue")]
+    [Authorize(Roles = "Admin,Sales")]
     public async Task<IActionResult> Issue(int id)
     {
         var result = await _service.IssueAsync(id);

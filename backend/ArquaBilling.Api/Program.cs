@@ -7,6 +7,7 @@ using ArquaBilling.Api.Helpers;
 using ArquaBilling.Api.Interfaces;
 using ArquaBilling.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization; // IAuthorizationMiddlewareResultHandler
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -114,6 +115,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+
+// 403 con envelope { message }: sin esto, un rol insuficiente devuelve un 403 vacío.
+builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, ForbiddenResultHandler>();
 
 // TODO: Configure CORS (allow the React web app and the Flutter mobile app).
 // builder.Services.AddCors(options =>

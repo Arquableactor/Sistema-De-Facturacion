@@ -21,6 +21,7 @@ public class WarrantiesController : ApiControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin,Technician")] // Generar garantía: Admin y Técnico (no Facturación)
     public async Task<IActionResult> Generate(GenerateWarrantyRequest request)
     {
         var userId = GetUserId();

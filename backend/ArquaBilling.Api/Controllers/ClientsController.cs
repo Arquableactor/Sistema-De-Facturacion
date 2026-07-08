@@ -30,6 +30,7 @@ public class ClientsController : ApiControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin,Sales")] // Técnico: solo lectura
     public async Task<IActionResult> Create(ClientCreateRequest request)
     {
         var result = await _service.CreateAsync(request);
@@ -39,6 +40,7 @@ public class ClientsController : ApiControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Admin,Sales")]
     public async Task<IActionResult> Update(int id, ClientUpdateRequest request)
     {
         var result = await _service.UpdateAsync(id, request);
@@ -46,6 +48,7 @@ public class ClientsController : ApiControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin,Sales")]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _service.DeleteAsync(id);

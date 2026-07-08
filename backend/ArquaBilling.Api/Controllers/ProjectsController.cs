@@ -33,6 +33,7 @@ public class ProjectsController : ApiControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin,Sales")] // Técnico no crea proyectos
     public async Task<IActionResult> Create(ProjectCreateRequest request)
     {
         var result = await _service.CreateAsync(request);
@@ -42,13 +43,15 @@ public class ProjectsController : ApiControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Admin,Sales")]
     public async Task<IActionResult> Update(int id, ProjectUpdateRequest request)
     {
         var result = await _service.UpdateAsync(id, request);
         return result.IsSuccess ? Ok(result.Value) : MapError(result);
     }
 
-    // Actualización puntual de etapa + progreso (progreso manual).
+    // Actualización puntual de etapa + progreso (progreso manual). Los tres roles pueden
+    // (Admin, Sales, Technician) → queda con el [Authorize] de clase, sin restricción de rol.
     [HttpPatch("{id:int}/stage-progress")]
     public async Task<IActionResult> UpdateStageProgress(int id, ProjectStageProgressRequest request)
     {
@@ -57,6 +60,7 @@ public class ProjectsController : ApiControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")] // Borrar proyecto: solo Admin
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _service.DeleteAsync(id);

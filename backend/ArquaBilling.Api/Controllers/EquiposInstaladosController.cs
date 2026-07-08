@@ -17,6 +17,7 @@ public class EquiposInstaladosController : ApiControllerBase
     }
 
     [HttpPost("api/projects/{projectId:int}/equipos")]
+    [Authorize(Roles = "Admin,Technician")] // Registrar equipo: Admin y Técnico (no Facturación)
     public async Task<IActionResult> Create(int projectId, EquipoInstaladoCreateRequest request)
     {
         var result = await _service.CreateAsync(projectId, request);
