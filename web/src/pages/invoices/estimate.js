@@ -7,9 +7,9 @@ export function round2(n) {
   return Math.round((Number(n) || 0) * 100) / 100
 }
 
-// Estimado de una línea a partir del producto elegido (precio de la lista ya cargada).
-export function estimateLine(product, quantity, discount) {
-  const price = product ? Number(product.price) || 0 : 0
+// Estimado de una línea con el precio unitario EDITADO de la línea (sujeto al mercado).
+export function estimateLine(unitPrice, quantity, discount) {
+  const price = round2(unitPrice)
   const qty = Number(quantity) || 0
   const gross = round2(price * qty)
   const disc = round2(discount)
@@ -19,13 +19,13 @@ export function estimateLine(product, quantity, discount) {
   return { price, gross, discount: disc, taxable, itbis, lineTotal }
 }
 
-// Estimado del total de la factura. `productById`: Map(id -> producto).
-export function estimateInvoice(lines, productById) {
+// Estimado del total de la factura sobre las líneas (cada una con su unitPrice editado).
+export function estimateInvoice(lines) {
   let subtotal = 0
   let itbis = 0
   let discount = 0
   const rows = lines.map((l) => {
-    const e = estimateLine(productById.get(Number(l.productId)), l.quantity, l.discount)
+    const e = estimateLine(l.unitPrice, l.quantity, l.discount)
     subtotal = round2(subtotal + e.taxable)
     itbis = round2(itbis + e.itbis)
     discount = round2(discount + e.discount)

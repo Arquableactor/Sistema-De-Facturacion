@@ -36,7 +36,14 @@ export default function InvoiceFormPage() {
 
   // Líneas (con key estable para add/remove).
   const keyRef = useRef(0)
-  const newLine = () => ({ key: (keyRef.current += 1), productId: '', quantity: '1', discount: '' })
+  const newLine = () => ({
+    key: (keyRef.current += 1),
+    productId: '',
+    description: '',
+    unitPrice: '',
+    quantity: '1',
+    discount: '',
+  })
   const [lines, setLines] = useState(() => [newLine()])
 
   const [errors, setErrors] = useState({ header: {}, lineErrs: {} })
@@ -61,10 +68,27 @@ export default function InvoiceFormPage() {
 
   const productById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products])
   const selectedProject = projects.find((p) => String(p.id) === projectId)
-  const est = useMemo(() => estimateInvoice(lines, productById), [lines, productById])
+  const est = useMemo(() => estimateInvoice(lines), [lines])
 
   function updateLine(key, field, value) {
     setLines((ls) => ls.map((l) => (l.key === key ? { ...l, [field]: value } : l)))
+  }
+  // Al elegir el producto, precarga el precio (catálogo) y la descripción (del catálogo,
+  // o el nombre si no tiene). Ambos quedan editables.
+  function setProduct(key, productId) {
+    const product = productById.get(Number(productId))
+    setLines((ls) =>
+      ls.map((l) =>
+        l.key === key
+          ? {
+              ...l,
+              productId,
+              unitPrice: product ? String(product.price) : '',
+              description: product ? product.description || product.name : '',
+            }
+          : l,
+      ),
+    )
   }
   function addLine() {
     setLines((ls) => [...ls, newLine()])
@@ -83,13 +107,14 @@ export default function InvoiceFormPage() {
 
     lines.forEach((l) => {
       const le = {}
-      const product = productById.get(Number(l.productId))
       if (!l.productId) le.product = 'Selecciona un producto.'
       const qty = Number(l.quantity)
       if (l.quantity === '' || Number.isNaN(qty) || qty <= 0) le.quantity = 'La cantidad debe ser > 0.'
+      const price = Number(l.unitPrice)
+      if (l.unitPrice === '' || Number.isNaN(price) || price < 0) le.unitPrice = 'Precio inválido (≥ 0).'
       const disc = Number(l.discount || 0)
       if (Number.isNaN(disc) || disc < 0) le.discount = 'El descuento debe ser ≥ 0.'
-      else if (product && qty > 0 && disc > round2(product.price * qty)) {
+      else if (!Number.isNaN(price) && qty > 0 && disc > round2(price * qty)) {
         le.discount = 'No puede superar precio × cantidad.'
       }
       if (Object.keys(le).length) lineErrs[l.key] = le
@@ -110,13 +135,21 @@ export default function InvoiceFormPage() {
 
     setSubmitting(true)
     try {
-      // Body EXACTO: sin precios, sin cliente, sin totales. El server calcula todo.
+      // El server calcula ITBIS/totales y deriva el cliente. El precio unitario y la
+      // descripción por línea SÍ se envían (editables, sujetos al mercado); no se envían
+      // totales. La descripción se omite si quedó vacía (server usa la del catálogo).
       const payload = {
         projectId: Number(projectId),
         items: lines.map((l) => {
-          const item = { productId: Number(l.productId), quantity: Number(l.quantity) }
+          const item = {
+            productId: Number(l.productId),
+            quantity: Number(l.quantity),
+            unitPrice: Number(l.unitPrice),
+          }
           const disc = Number(l.discount || 0)
           if (disc > 0) item.discount = disc
+          const desc = l.description.trim()
+          if (desc) item.description = desc
           return item
         }),
         dueDate,
@@ -234,11 +267,13 @@ export default function InvoiceFormPage() {
                 <table className="w-full text-left text-sm">
                   <thead className="bg-edge-soft text-xs uppercase tracking-wide text-muted">
                     <tr>
-                      <th className="px-3 py-2.5 font-semibold">Producto</th>
-                      <th className="w-24 px-3 py-2.5 text-right font-semibold">Cantidad</th>
-                      <th className="w-28 px-3 py-2.5 text-right font-semibold">Descuento</th>
-                      <th className="w-28 px-3 py-2.5 text-right font-semibold">ITBIS *</th>
-                      <th className="w-32 px-3 py-2.5 text-right font-semibold">Total *</th>
+                      <th className="min-w-[170px] px-3 py-2.5 font-semibold">Producto</th>
+                      <th className="min-w-[190px] px-3 py-2.5 font-semibold">Descripción</th>
+                      <th className="w-20 px-3 py-2.5 text-right font-semibold">Cant.</th>
+                      <th className="w-28 px-3 py-2.5 text-right font-semibold">Precio unit.</th>
+                      <th className="w-24 px-3 py-2.5 text-right font-semibold">Descuento</th>
+                      <th className="w-24 px-3 py-2.5 text-right font-semibold">ITBIS *</th>
+                      <th className="w-28 px-3 py-2.5 text-right font-semibold">Total *</th>
                       <th className="w-10 px-3 py-2.5"></th>
                     </tr>
                   </thead>
@@ -251,7 +286,7 @@ export default function InvoiceFormPage() {
                           <td className="px-3 py-2">
                             <select
                               value={l.productId}
-                              onChange={(e) => updateLine(l.key, 'productId', e.target.value)}
+                              onChange={(e) => setProduct(l.key, e.target.value)}
                               className={inputCls(le.product)}
                               title={le.product}
                             >
@@ -268,6 +303,16 @@ export default function InvoiceFormPage() {
                           </td>
                           <td className="px-3 py-2">
                             <input
+                              type="text"
+                              maxLength={500}
+                              value={l.description}
+                              onChange={(e) => updateLine(l.key, 'description', e.target.value)}
+                              className={inputCls(false)}
+                              placeholder="Descripción de la línea"
+                            />
+                          </td>
+                          <td className="px-3 py-2">
+                            <input
                               type="number"
                               min="0"
                               step="0.01"
@@ -278,6 +323,21 @@ export default function InvoiceFormPage() {
                             />
                             {le.quantity && (
                               <div className="mt-1 text-xs text-danger-strong">{le.quantity}</div>
+                            )}
+                          </td>
+                          <td className="px-3 py-2">
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={l.unitPrice}
+                              onChange={(e) => updateLine(l.key, 'unitPrice', e.target.value)}
+                              className={`${inputCls(le.unitPrice)} text-right`}
+                              title={le.unitPrice}
+                              placeholder="0.00"
+                            />
+                            {le.unitPrice && (
+                              <div className="mt-1 text-xs text-danger-strong">{le.unitPrice}</div>
                             )}
                           </td>
                           <td className="px-3 py-2">
