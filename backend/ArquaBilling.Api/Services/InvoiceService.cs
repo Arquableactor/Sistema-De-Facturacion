@@ -90,7 +90,9 @@ public class InvoiceService : IInvoiceService
                     $"La cantidad del producto {product.Code} debe ser mayor que cero.");
             }
 
-            var unitPrice = product.Price; // snapshot
+            // Precio unitario: override del cliente si viene (sujeto al mercado), si no el del
+            // catálogo. En ningún caso se modifica Product.Price.
+            var unitPrice = line.UnitPrice.HasValue ? Round(line.UnitPrice.Value) : product.Price;
             var gross = Round(unitPrice * line.Quantity);
             var discount = Round(line.Discount ?? 0m);
             if (discount < 0m || discount > gross)
@@ -106,7 +108,10 @@ public class InvoiceService : IInvoiceService
             items.Add(new InvoiceItem
             {
                 ProductId = product.Id,
-                Description = product.Name,
+                // Descripción personalizada si viene; si no, la del catálogo (o el nombre).
+                Description = string.IsNullOrWhiteSpace(line.Description)
+                    ? (string.IsNullOrWhiteSpace(product.Description) ? product.Name : product.Description)
+                    : line.Description.Trim(),
                 Quantity = line.Quantity,
                 UnitPrice = unitPrice,
                 Discount = discount,
