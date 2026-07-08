@@ -6,6 +6,7 @@ import Badge from '../components/ui/Badge.jsx'
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx'
 import DataState from '../components/data/DataState.jsx'
 import { useToast } from '../components/ui/Toast.jsx'
+import { useAuth } from '../auth/AuthContext.jsx'
 import useApi from '../hooks/useApi.js'
 import { money, date } from '../lib/format.js'
 import { getInvoice, issueInvoice, downloadInvoicePdf } from '../api/invoicesApi.js'
@@ -27,6 +28,10 @@ function Info({ label, value, children }) {
 export default function InvoiceDetailPage() {
   const { id } = useParams()
   const toast = useToast()
+  const { can } = useAuth()
+  const canIssue = can('invoices.issue')
+  const canRegisterPayment = can('payments.register')
+  const canVoid = can('payments.void')
 
   const { data: invoice, loading, error, reload: reloadInvoice } = useApi(() => getInvoice(id), [id])
   const {
@@ -125,7 +130,7 @@ export default function InvoiceDetailPage() {
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-2">
-                    {invoice.status === 'Draft' && (
+                    {invoice.status === 'Draft' && canIssue && (
                       <Button
                         variant="ghost"
                         className="text-primary hover:bg-primary-soft"
@@ -220,6 +225,8 @@ export default function InvoiceDetailPage() {
                   </div>
                   <PayAction
                     status={invoice.status}
+                    canRegister={canRegisterPayment}
+                    canIssue={canIssue}
                     onRegister={() => setPayOpen(true)}
                     onEmit={() => setEmitOpen(true)}
                   />
@@ -276,7 +283,7 @@ export default function InvoiceDetailPage() {
                                 )}
                               </td>
                               <td className="px-4 py-3 text-right">
-                                {!p.isVoided && (
+                                {!p.isVoided && canVoid && (
                                   <Button
                                     variant="ghost"
                                     className="px-2.5 py-1.5 text-danger-strong hover:bg-danger-soft"
@@ -361,18 +368,20 @@ function Money({ label, value, tone }) {
   )
 }
 
-// Acción de la sección de pagos según el estado de la factura.
-function PayAction({ status, onRegister, onEmit }) {
+// Acción de la sección de pagos según el estado de la factura y los permisos del rol.
+function PayAction({ status, canRegister, canIssue, onRegister, onEmit }) {
   if (status === 'Issued' || status === 'PartiallyPaid') {
-    return <Button onClick={onRegister}>+ Registrar pago</Button>
+    return canRegister ? <Button onClick={onRegister}>+ Registrar pago</Button> : null
   }
   if (status === 'Draft') {
     return (
       <div className="flex items-center gap-3 text-sm text-muted">
         <span>Emite la factura para poder registrar pagos</span>
-        <Button variant="ghost" className="text-primary hover:bg-primary-soft" onClick={onEmit}>
-          Emitir
-        </Button>
+        {canIssue && (
+          <Button variant="ghost" className="text-primary hover:bg-primary-soft" onClick={onEmit}>
+            Emitir
+          </Button>
+        )}
       </div>
     )
   }

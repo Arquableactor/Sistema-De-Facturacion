@@ -8,6 +8,7 @@ import {
   IconEquipment,
   IconWarranty,
   IconClients,
+  IconUsers,
   IconLogout,
   IconChevron,
 } from '../ui/icons.jsx'
@@ -19,10 +20,13 @@ const NAV = [
   { to: '/equipos', label: 'Equipos', Icon: IconEquipment },
   { to: '/garantias', label: 'Garantías', Icon: IconWarranty },
   { to: '/clientes', label: 'Clientes', Icon: IconClients },
+  // Solo-Admin: se filtra abajo según el permiso.
+  { to: '/usuarios', label: 'Usuarios', Icon: IconUsers, action: 'users.manage' },
 ]
 
 export default function Sidebar({ collapsed, onToggle }) {
-  const { user, logout } = useAuth()
+  const { user, logout, can } = useAuth()
+  const nav = NAV.filter((item) => !item.action || can(item.action))
 
   return (
     <aside
@@ -55,7 +59,7 @@ export default function Sidebar({ collapsed, onToggle }) {
 
       {/* Navegación */}
       <nav className="flex-1 space-y-1 px-3 py-2">
-        {NAV.map(({ to, label, Icon, end }) => (
+        {nav.map(({ to, label, Icon, end }) => (
           <NavLink
             key={to}
             to={to}

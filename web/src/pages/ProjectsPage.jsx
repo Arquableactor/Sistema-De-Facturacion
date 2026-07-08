@@ -6,6 +6,7 @@ import Badge from '../components/ui/Badge.jsx'
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx'
 import DataState from '../components/data/DataState.jsx'
 import { useToast } from '../components/ui/Toast.jsx'
+import { useAuth } from '../auth/AuthContext.jsx'
 import useApi from '../hooks/useApi.js'
 import { money } from '../lib/format.js'
 import { getProjects, deleteProject } from '../api/projectsApi.js'
@@ -15,6 +16,9 @@ import { stageMeta, ProgressBar } from './projects/projectMeta.jsx'
 
 export default function ProjectsPage() {
   const toast = useToast()
+  const { can } = useAuth()
+  const canWrite = can('projects.write') // crear / editar
+  const canDelete = can('projects.delete')
   const [includeInactive, setIncludeInactive] = useState(false)
   const { data, loading, error, reload } = useApi(
     () => getProjects(includeInactive),
@@ -70,7 +74,7 @@ export default function ProjectsPage() {
       <Topbar
         title="Proyectos"
         subtitle="Instalaciones solares: el centro del sistema"
-        action={<Button onClick={openCreate}>+ Nuevo proyecto</Button>}
+        action={canWrite ? <Button onClick={openCreate}>+ Nuevo proyecto</Button> : null}
       />
 
       <div className="space-y-4 p-6">
@@ -145,9 +149,12 @@ export default function ProjectsPage() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex justify-end gap-1">
-                            <Button variant="ghost" className="px-2.5 py-1.5" onClick={() => openEdit(p)}>
-                              Editar
-                            </Button>
+                            {canWrite && (
+                              <Button variant="ghost" className="px-2.5 py-1.5" onClick={() => openEdit(p)}>
+                                Editar
+                              </Button>
+                            )}
+                            {/* Etapa/progreso: los tres roles pueden. */}
                             <Button
                               variant="ghost"
                               className="px-2.5 py-1.5"
@@ -155,7 +162,7 @@ export default function ProjectsPage() {
                             >
                               Etapa
                             </Button>
-                            {p.isActive && (
+                            {canDelete && p.isActive && (
                               <Button
                                 variant="ghost"
                                 className="px-2.5 py-1.5 text-danger-strong hover:bg-danger-soft"

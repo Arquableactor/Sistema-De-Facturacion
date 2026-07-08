@@ -5,6 +5,7 @@ import Badge from '../components/ui/Badge.jsx'
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx'
 import DataState from '../components/data/DataState.jsx'
 import { useToast } from '../components/ui/Toast.jsx'
+import { useAuth } from '../auth/AuthContext.jsx'
 import useApi from '../hooks/useApi.js'
 import { money, formatWarranty } from '../lib/format.js'
 import { getProducts, deleteProduct } from '../api/productsApi.js'
@@ -21,6 +22,8 @@ const CAT_LABEL = {
 
 export default function ProductsPage() {
   const toast = useToast()
+  const { can } = useAuth()
+  const canWrite = can('products.write')
   const [includeInactive, setIncludeInactive] = useState(false)
   const { data, loading, error, reload } = useApi(
     () => getProducts(includeInactive),
@@ -69,7 +72,7 @@ export default function ProductsPage() {
       <Topbar
         title="Equipos"
         subtitle="Catálogo de productos · el inventario de equipos instalados llegará en otra pestaña"
-        action={<Button onClick={openCreate}>+ Nuevo producto</Button>}
+        action={canWrite ? <Button onClick={openCreate}>+ Nuevo producto</Button> : null}
       />
 
       <div className="space-y-4 p-6">
@@ -136,17 +139,23 @@ export default function ProductsPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" className="px-2.5 py-1.5" onClick={() => openEdit(p)}>
-                            Editar
-                          </Button>
-                          {p.isActive && (
-                            <Button
-                              variant="ghost"
-                              className="px-2.5 py-1.5 text-danger-strong hover:bg-danger-soft"
-                              onClick={() => setToDelete(p)}
-                            >
-                              Eliminar
-                            </Button>
+                          {canWrite ? (
+                            <>
+                              <Button variant="ghost" className="px-2.5 py-1.5" onClick={() => openEdit(p)}>
+                                Editar
+                              </Button>
+                              {p.isActive && (
+                                <Button
+                                  variant="ghost"
+                                  className="px-2.5 py-1.5 text-danger-strong hover:bg-danger-soft"
+                                  onClick={() => setToDelete(p)}
+                                >
+                                  Eliminar
+                                </Button>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-faint">—</span>
                           )}
                         </div>
                       </td>

@@ -6,6 +6,7 @@ import Badge from '../components/ui/Badge.jsx'
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx'
 import DataState from '../components/data/DataState.jsx'
 import { useToast } from '../components/ui/Toast.jsx'
+import { useAuth } from '../auth/AuthContext.jsx'
 import useApi from '../hooks/useApi.js'
 import { money, date } from '../lib/format.js'
 import { getInvoices, issueInvoice, downloadInvoicePdf } from '../api/invoicesApi.js'
@@ -23,6 +24,9 @@ const FILTERS = [
 export default function InvoicesPage() {
   const navigate = useNavigate()
   const toast = useToast()
+  const { can } = useAuth()
+  const canCreate = can('invoices.create')
+  const canIssue = can('invoices.issue')
   const [status, setStatus] = useState('')
 
   const { data, loading, error, reload } = useApi(
@@ -73,7 +77,11 @@ export default function InvoicesPage() {
       <Topbar
         title="Facturación"
         subtitle="Facturas de los proyectos"
-        action={<Button onClick={() => navigate('/facturacion/nueva')}>+ Nueva factura</Button>}
+        action={
+          canCreate ? (
+            <Button onClick={() => navigate('/facturacion/nueva')}>+ Nueva factura</Button>
+          ) : null
+        }
       />
 
       <div className="space-y-4 p-6">
@@ -153,7 +161,7 @@ export default function InvoicesPage() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex justify-end gap-1">
-                            {inv.status === 'Draft' && (
+                            {inv.status === 'Draft' && canIssue && (
                               <Button
                                 variant="ghost"
                                 className="px-2.5 py-1.5 text-primary hover:bg-primary-soft"

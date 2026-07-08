@@ -5,6 +5,7 @@ import Badge from '../components/ui/Badge.jsx'
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx'
 import DataState from '../components/data/DataState.jsx'
 import { useToast } from '../components/ui/Toast.jsx'
+import { useAuth } from '../auth/AuthContext.jsx'
 import useApi from '../hooks/useApi.js'
 import { getClients, deleteClient } from '../api/clientsApi.js'
 import ClientFormModal from './clients/ClientFormModal.jsx'
@@ -13,6 +14,8 @@ const DOC_LABEL = { Cedula: 'Cédula', Rnc: 'RNC', Passport: 'Pasaporte' }
 
 export default function ClientsPage() {
   const toast = useToast()
+  const { can } = useAuth()
+  const canWrite = can('clients.write')
   const [includeInactive, setIncludeInactive] = useState(false)
   const { data, loading, error, reload } = useApi(
     () => getClients(includeInactive),
@@ -61,7 +64,7 @@ export default function ClientsPage() {
       <Topbar
         title="Clientes"
         subtitle="Gestiona los clientes del negocio"
-        action={<Button onClick={openCreate}>+ Nuevo cliente</Button>}
+        action={canWrite ? <Button onClick={openCreate}>+ Nuevo cliente</Button> : null}
       />
 
       <div className="space-y-4 p-6">
@@ -122,17 +125,23 @@ export default function ClientsPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" className="px-2.5 py-1.5" onClick={() => openEdit(c)}>
-                            Editar
-                          </Button>
-                          {c.isActive && (
-                            <Button
-                              variant="ghost"
-                              className="px-2.5 py-1.5 text-danger-strong hover:bg-danger-soft"
-                              onClick={() => setToDelete(c)}
-                            >
-                              Eliminar
-                            </Button>
+                          {canWrite ? (
+                            <>
+                              <Button variant="ghost" className="px-2.5 py-1.5" onClick={() => openEdit(c)}>
+                                Editar
+                              </Button>
+                              {c.isActive && (
+                                <Button
+                                  variant="ghost"
+                                  className="px-2.5 py-1.5 text-danger-strong hover:bg-danger-soft"
+                                  onClick={() => setToDelete(c)}
+                                >
+                                  Eliminar
+                                </Button>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-faint">—</span>
                           )}
                         </div>
                       </td>

@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthContext.jsx'
 import ProtectedRoute from './auth/ProtectedRoute.jsx'
+import RequireRole from './auth/RequireRole.jsx'
 import { ToastProvider } from './components/ui/Toast.jsx'
 import AppLayout from './components/layout/AppLayout.jsx'
 import LoginPage from './pages/LoginPage.jsx'
@@ -14,6 +15,7 @@ import InvoicesPage from './pages/InvoicesPage.jsx'
 import InvoiceFormPage from './pages/invoices/InvoiceFormPage.jsx'
 import InvoiceDetailPage from './pages/InvoiceDetailPage.jsx'
 import GarantiasPage from './pages/GarantiasPage.jsx'
+import UsersPage from './pages/UsersPage.jsx'
 import PublicVerifyPage from './pages/PublicVerifyPage.jsx'
 
 export default function App() {
@@ -40,6 +42,15 @@ export default function App() {
               <Route path="equipos" element={<ProductsPage />} />
               <Route path="garantias" element={<GarantiasPage />} />
               <Route path="clientes" element={<ClientsPage />} />
+              {/* Solo-Admin: la guarda redirige al panel si el rol no puede. */}
+              <Route
+                path="usuarios"
+                element={
+                  <RequireRole action="users.manage">
+                    <UsersPage />
+                  </RequireRole>
+                }
+              />
             </Route>
           </Route>
 

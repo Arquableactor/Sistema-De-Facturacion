@@ -54,6 +54,14 @@ export const IconClients = (p) => (
   </svg>
 )
 
+export const IconUsers = (p) => (
+  <svg {...base} {...p}>
+    <circle cx="12" cy="8" r="3.2" />
+    <path d="M6 20a6 6 0 0 1 12 0" />
+    <circle cx="18.5" cy="6.5" r="2" />
+  </svg>
+)
+
 export const IconLogout = (p) => (
   <svg {...base} {...p}>
     <path d="M15 12H5M11 8l-4 4 4 4" />

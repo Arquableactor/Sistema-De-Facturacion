@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import * as authApi from '../api/authApi.js'
 import { getToken, getStoredUser, setSession, clearSession } from '../api/client.js'
+import { can as canRole } from './permissions.js'
 
 const AuthContext = createContext(null)
 
@@ -52,7 +53,17 @@ export function AuthProvider({ children }) {
   }
 
   const value = useMemo(
-    () => ({ token, user, loading, isAuthenticated: !!token, login, logout }),
+    () => ({
+      token,
+      user,
+      role: user?.role ?? null,
+      loading,
+      isAuthenticated: !!token,
+      // ¿Puede el usuario actual ejecutar `action`? (según la matriz de permisos).
+      can: (action) => canRole(user?.role, action),
+      login,
+      logout,
+    }),
     [token, user, loading],
   )
 

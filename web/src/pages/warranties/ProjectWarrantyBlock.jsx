@@ -3,6 +3,7 @@ import Button from '../../components/ui/Button.jsx'
 import Badge from '../../components/ui/Badge.jsx'
 import Spinner from '../../components/ui/Spinner.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useAuth } from '../../auth/AuthContext.jsx'
 import useApi from '../../hooks/useApi.js'
 import { date, formatWarranty } from '../../lib/format.js'
 import { getWarranties, getWarranty, downloadWarrantyPdf } from '../../api/warrantiesApi.js'
@@ -14,6 +15,8 @@ import GenerateWarrantyModal from './GenerateWarrantyModal.jsx'
 // recargamos la garantía.
 export default function ProjectWarrantyBlock({ projectId, equiposCount }) {
   const toast = useToast()
+  const { can } = useAuth()
+  const canGenerate = can('warranties.generate') // Admin y Técnico (no Facturación)
   const { data: warranties, loading, error, reload } = useApi(
     () => getWarranties({ projectId }),
     [projectId],
@@ -157,7 +160,7 @@ export default function ProjectWarrantyBlock({ projectId, equiposCount }) {
           // ---- Estado 1: sin garantía, con equipos ----
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-muted">Este proyecto aún no tiene garantía.</p>
-            <Button onClick={() => setGenOpen(true)}>Generar garantía</Button>
+            {canGenerate && <Button onClick={() => setGenOpen(true)}>Generar garantía</Button>}
           </div>
         ) : (
           // ---- Estado 2: sin garantía, sin equipos ----
@@ -165,7 +168,7 @@ export default function ProjectWarrantyBlock({ projectId, equiposCount }) {
             <p className="text-sm text-muted">
               Registra equipos instalados para poder generar la garantía.
             </p>
-            <Button disabled>Generar garantía</Button>
+            {canGenerate && <Button disabled>Generar garantía</Button>}
           </div>
         )}
       </div>

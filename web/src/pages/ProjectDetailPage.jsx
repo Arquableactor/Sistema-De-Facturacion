@@ -5,6 +5,7 @@ import Button from '../components/ui/Button.jsx'
 import Badge from '../components/ui/Badge.jsx'
 import DataState from '../components/data/DataState.jsx'
 import { useToast } from '../components/ui/Toast.jsx'
+import { useAuth } from '../auth/AuthContext.jsx'
 import useApi from '../hooks/useApi.js'
 import { money, date, formatWarranty } from '../lib/format.js'
 import { getProject } from '../api/projectsApi.js'
@@ -38,6 +39,9 @@ function FuturePanel({ title }) {
 export default function ProjectDetailPage() {
   const { id } = useParams()
   const toast = useToast()
+  const { can } = useAuth()
+  const canEditProject = can('projects.write')
+  const canRegisterEquipo = can('equipos.register')
 
   const { data: project, loading, error, reload: reloadProject } = useApi(() => getProject(id), [id])
   const {
@@ -106,9 +110,12 @@ export default function ProjectDetailPage() {
                     <p className="mt-1 text-sm text-muted">Proyecto #{project.id}</p>
                   </div>
                   <div className="flex shrink-0 gap-2">
-                    <Button variant="ghost" onClick={() => setEditOpen(true)}>
-                      Editar
-                    </Button>
+                    {canEditProject && (
+                      <Button variant="ghost" onClick={() => setEditOpen(true)}>
+                        Editar
+                      </Button>
+                    )}
+                    {/* Etapa/progreso: los tres roles pueden. */}
                     <Button variant="ghost" onClick={() => setStageOpen(true)}>
                       Etapa/Progreso
                     </Button>
@@ -147,11 +154,13 @@ export default function ProjectDetailPage() {
                       {equiposLoading ? 'Cargando…' : `${list.length} equipo${list.length === 1 ? '' : 's'}`}
                     </p>
                   </div>
-                  <span title={project.isActive ? undefined : 'El proyecto está inactivo'}>
-                    <Button onClick={() => setEquipoOpen(true)} disabled={!project.isActive}>
-                      + Registrar equipo
-                    </Button>
-                  </span>
+                  {canRegisterEquipo && (
+                    <span title={project.isActive ? undefined : 'El proyecto está inactivo'}>
+                      <Button onClick={() => setEquipoOpen(true)} disabled={!project.isActive}>
+                        + Registrar equipo
+                      </Button>
+                    </span>
+                  )}
                 </div>
 
                 <div className="p-6">
