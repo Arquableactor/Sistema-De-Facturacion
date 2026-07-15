@@ -3,7 +3,7 @@ import Modal from '../../components/ui/Modal.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Field from '../../components/ui/Field.jsx'
 import Spinner from '../../components/ui/Spinner.jsx'
-import { createProject, updateProject } from '../../api/projectsApi.js'
+import { createProject, updateProject, getProject } from '../../api/projectsApi.js'
 import { getClients } from '../../api/clientsApi.js'
 import { getUsers } from '../../api/usersApi.js'
 import { mapDetails } from '../../lib/apiErrors.js'
@@ -31,11 +31,29 @@ const EMPTY = {
   notes: '',
 }
 
-// ISO -> 'YYYY-MM-DD' para <input type="date">.
+// ISO -> 'YYYY-MM-DD' para <input type="date">. Las fechas se guardan a medianoche
+// UTC, así que slice sobre toISOString las devuelve intactas (sin corrimiento).
 function toDateInput(iso) {
   if (!iso) return ''
   const d = new Date(iso)
   return Number.isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10)
+}
+
+// Proyecto (respuesta de detalle) -> estado del formulario.
+function fromProject(p) {
+  return {
+    nombre: p.nombre ?? '',
+    clientId: p.clientId != null ? String(p.clientId) : '',
+    responsableId: p.responsableId != null ? String(p.responsableId) : '',
+    capacidadKwp: p.capacidadKwp != null ? String(p.capacidadKwp) : '',
+    etapa: p.etapa ?? 'Visita',
+    progreso: p.progreso != null ? String(p.progreso) : '0',
+    fechaInicio: toDateInput(p.fechaInicio),
+    fechaClave: toDateInput(p.fechaClave),
+    costo: p.costo != null ? String(p.costo) : '',
+    presupuesto: p.presupuesto != null ? String(p.presupuesto) : '',
+    notes: p.notes ?? '',
+  }
 }
 
 function num(v) {
@@ -71,45 +89,38 @@ export default function ProjectFormModal({ open, project, onClose, onSaved }) {
   const [optionsLoading, setOptionsLoading] = useState(false)
   const [optionsError, setOptionsError] = useState('')
 
+  // Carga TODO lo que el form necesita: opciones + (si edita) el proyecto FRESCO.
+  // El objeto que llega por props puede venir de la LISTA (ProjectListItem), que NO
+  // trae fechaInicio/fechaClave/costo/presupuesto/notes: precargar desde ahí dejaba
+  // esos campos vacíos y al guardar borraba fechaClave y notes. Por eso pedimos
+  // siempre GET /api/projects/{id} al editar.
+  const projectId = project?.id ?? null
   const loadOptions = useCallback(() => {
     setOptionsLoading(true)
     setOptionsError('')
-    return Promise.all([getClients(), getUsers()])
-      .then(([cs, us]) => {
+    // Limpiamos mientras carga: si no, al reabrir para OTRO proyecto se verían por un
+    // instante los valores del anterior. El submit está deshabilitado hasta que llegue.
+    setForm(EMPTY)
+    return Promise.all([
+      getClients(),
+      getUsers(),
+      projectId != null ? getProject(projectId) : Promise.resolve(null),
+    ])
+      .then(([cs, us, detail]) => {
         setClients(cs || [])
         setUsers(us || [])
+        setForm(detail ? fromProject(detail) : EMPTY)
+        setErrors({})
+        setFormError('')
       })
-      .catch((err) => setOptionsError(err.message || 'No se pudieron cargar las opciones.'))
+      .catch((err) => setOptionsError(err.message || 'No se pudieron cargar los datos.'))
       .finally(() => setOptionsLoading(false))
-  }, [])
+  }, [projectId])
 
   useEffect(() => {
     if (!open) return
     loadOptions()
   }, [open, loadOptions])
-
-  useEffect(() => {
-    if (!open) return
-    setForm(
-      project
-        ? {
-            nombre: project.nombre ?? '',
-            clientId: project.clientId != null ? String(project.clientId) : '',
-            responsableId: project.responsableId != null ? String(project.responsableId) : '',
-            capacidadKwp: project.capacidadKwp != null ? String(project.capacidadKwp) : '',
-            etapa: project.etapa ?? 'Visita',
-            progreso: project.progreso != null ? String(project.progreso) : '0',
-            fechaInicio: toDateInput(project.fechaInicio),
-            fechaClave: toDateInput(project.fechaClave),
-            costo: project.costo != null ? String(project.costo) : '',
-            presupuesto: project.presupuesto != null ? String(project.presupuesto) : '',
-            notes: project.notes ?? '',
-          }
-        : EMPTY,
-    )
-    setErrors({})
-    setFormError('')
-  }, [open, project])
 
   function set(field, value) {
     setForm((f) => ({ ...f, [field]: value }))
@@ -194,7 +205,7 @@ export default function ProjectFormModal({ open, project, onClose, onSaved }) {
         <form id="project-form" onSubmit={onSubmit} className="space-y-4" noValidate>
           {optionsLoading && (
             <div className="flex items-center gap-2 rounded-btn bg-primary-soft px-3 py-2 text-sm text-primary">
-              <Spinner size={14} /> Cargando clientes y responsables…
+              <Spinner size={14} /> {isEdit ? 'Cargando el proyecto…' : 'Cargando clientes y responsables…'}
             </div>
           )}
           {formError && (
