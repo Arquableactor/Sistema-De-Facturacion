@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthContext.jsx'
 import ProtectedRoute from './auth/ProtectedRoute.jsx'
 import RequireRole from './auth/RequireRole.jsx'
+import { ThemeProvider } from './theme/ThemeContext.jsx'
 import { ToastProvider } from './components/ui/Toast.jsx'
 import AppLayout from './components/layout/AppLayout.jsx'
 import LoginPage from './pages/LoginPage.jsx'
@@ -21,7 +22,9 @@ import PublicVerifyPage from './pages/PublicVerifyPage.jsx'
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
+      {/* El tema envuelve todo: aplica también al login y a la página pública. */}
+      <ThemeProvider>
+        <AuthProvider>
         <ToastProvider>
           <Routes>
           {/* Públicas (sin login) */}
@@ -58,7 +61,8 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </ToastProvider>
-      </AuthProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   )
 }

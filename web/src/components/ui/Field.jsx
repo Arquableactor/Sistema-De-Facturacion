@@ -5,7 +5,7 @@ export default function Field({ label, id, type = 'text', error, children, ...pr
     <input
       id={id}
       type={type}
-      className={`w-full rounded-btn border bg-white px-3.5 py-2.5 text-sm text-brand-text outline-none transition-colors placeholder:text-faint focus:ring-2 ${
+      className={`w-full rounded-btn border bg-surface px-3.5 py-2.5 text-sm text-brand-text outline-none transition-colors placeholder:text-faint focus:ring-2 ${
         error
           ? 'border-danger focus:border-danger focus:ring-danger/15'
           : 'border-edge focus:border-primary focus:ring-primary/15'

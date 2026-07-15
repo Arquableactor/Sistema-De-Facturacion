@@ -2,7 +2,100 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Tokens del handoff como variables CSS: canales RGB sueltos ("R G B") para que
+   Tailwind pueda aplicarles opacidad (bg-edge-soft/40, ring-primary/15, …).
+   Cambiar de tema = cambiar estas variables; los componentes no se tocan. */
 @layer base {
+  :root {
+    /* ---- Tema CLARO (valores originales del handoff) ---- */
+    --c-appbg: 237 242 248; /* #EDF2F8 */
+    --c-surface: 255 255 255; /* #FFFFFF */
+    --c-edge: 230 237 244; /* #E6EDF4 */
+    --c-edge-soft: 238 242 247; /* #EEF2F7 */
+    --c-brand-text: 14 42 71; /* #0E2A47 */
+    --c-muted: 91 113 133; /* #5B7185 */
+    --c-muted-2: 107 130 153; /* #6B8299 */
+    --c-faint: 131 151 171; /* #8397AB */
+    --c-faint-2: 162 179 196; /* #A2B3C4 */
+
+    --c-primary: 20 102 216; /* #1466D8 */
+    --c-primary-soft: 231 240 254; /* #E7F0FE */
+    --c-primary-solid: 20 102 216; /* #1466D8 */
+    --c-primary-solid-hover: 16 89 189; /* #1059BD */
+
+    --c-green: 24 169 87; /* #18A957 */
+    --c-green-strong: 15 122 65; /* #0F7A41 */
+    --c-green-soft: 231 246 238; /* #E7F6EE */
+
+    --c-amber: 245 166 35; /* #F5A623 */
+    --c-amber-strong: 154 101 16; /* #9A6510 */
+    --c-amber-soft: 254 244 226; /* #FEF4E2 */
+
+    --c-danger: 229 72 77; /* #E5484D */
+    --c-danger-strong: 192 54 44; /* #C0362C */
+    --c-danger-soft: 253 236 236; /* #FDECEC */
+    --c-danger-solid: 229 72 77; /* #E5484D */
+    --c-danger-solid-hover: 192 54 44; /* #C0362C */
+
+    --c-purple: 139 92 246; /* #8B5CF6 */
+    --c-purple-strong: 109 40 217; /* #6D28D9 - texto sobre purple-soft */
+    --c-purple-soft: 237 233 252; /* #EDE9FC */
+    --c-orange: 229 118 77; /* #E5764D */
+    --c-orange-strong: 154 74 36; /* #9A4A24 - texto sobre orange-soft */
+    --c-orange-soft: 252 238 232; /* #FCEEE8 */
+
+    --shadow-card: 0 1px 2px rgba(14, 42, 71, 0.04), 0 6px 20px rgba(14, 42, 71, 0.06);
+
+    color-scheme: light;
+  }
+
+  .dark {
+    /* ---- Tema OSCURO ---- Navy profundo, misma familia de marca.
+       Los `soft` pasan a fondo oscuro y los `strong` a texto claro, para que los
+       badges sigan legibles y distinguibles entre sí. */
+    --c-appbg: 11 18 32; /* #0B1220 */
+    --c-surface: 19 28 46; /* #131C2E */
+    --c-edge: 36 51 74; /* #24334A */
+    --c-edge-soft: 28 39 57; /* #1C2739 */
+    --c-brand-text: 230 237 247; /* #E6EDF7 - texto principal */
+    --c-muted: 155 174 196; /* #9BAEC4 */
+    --c-muted-2: 141 161 184; /* #8DA1B8 */
+    --c-faint: 110 130 154; /* #6E829A */
+    --c-faint-2: 93 113 137; /* #5D7189 */
+
+    --c-primary: 91 157 255; /* #5B9DFF - acento/texto sobre oscuro */
+    --c-primary-soft: 22 41 74; /* #16294A */
+    --c-primary-solid: 37 99 235; /* #2563EB - fondo de botón, blanco legible encima */
+    --c-primary-solid-hover: 29 79 215; /* #1D4FD7 */
+
+    --c-green: 47 190 110; /* #2FBE6E */
+    --c-green-strong: 110 231 168; /* #6EE7A8 */
+    --c-green-soft: 16 48 31; /* #10301F */
+
+    --c-amber: 245 166 35; /* #F5A623 */
+    --c-amber-strong: 251 196 107; /* #FBC46B */
+    --c-amber-soft: 58 42 16; /* #3A2A10 */
+
+    --c-danger: 247 110 114; /* #F76E72 - bordes/anillos visibles sobre oscuro */
+    --c-danger-strong: 255 155 158; /* #FF9B9E - texto de error */
+    --c-danger-soft: 58 22 24; /* #3A1618 */
+    --c-danger-solid: 214 56 61; /* #D6383D - fondo de botón, blanco legible encima */
+    --c-danger-solid-hover: 179 46 51; /* #B32E33 */
+
+    --c-purple: 167 139 250; /* #A78BFA */
+    --c-purple-strong: 196 181 253; /* #C4B5FD - texto sobre purple-soft */
+    --c-purple-soft: 36 26 69; /* #241A45 */
+    --c-orange: 240 138 99; /* #F08A63 */
+    --c-orange-strong: 252 184 154; /* #FCB89A - texto sobre orange-soft */
+    --c-orange-soft: 58 33 23; /* #3A2117 */
+
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.35);
+
+    /* Pinta en oscuro los controles nativos (scrollbars y el icono del date-picker,
+       que sin esto queda casi invisible sobre el input oscuro). */
+    color-scheme: dark;
+  }
+
   html,
   body,
   #root {

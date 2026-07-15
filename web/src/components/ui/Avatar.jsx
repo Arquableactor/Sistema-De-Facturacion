@@ -3,14 +3,15 @@
 // ni subida de archivos); si algún día se quieren, sería otra feature con backend.
 // Reutilizable para clientes, usuarios o cualquier entidad con nombre.
 
-// Paleta alineada a los tokens del handoff. Cada entrada es [fondo, texto] con
-// contraste suficiente en claro y oscuro.
+// Paleta alineada a los tokens del handoff. Cada entrada es [fondo, texto]: siempre
+// `*-soft` de fondo con su `*-strong` de texto, que es el par con contraste suficiente
+// en ambos temas (el token DEFAULT es demasiado claro para texto sobre el soft).
 const PALETTE = [
   ['bg-primary-soft', 'text-primary'],
   ['bg-green-soft', 'text-green-strong'],
   ['bg-amber-soft', 'text-amber-strong'],
-  ['bg-purple-soft', 'text-purple'],
-  ['bg-orange-soft', 'text-orange'],
+  ['bg-purple-soft', 'text-purple-strong'],
+  ['bg-orange-soft', 'text-orange-strong'],
   ['bg-danger-soft', 'text-danger-strong'],
 ]
 

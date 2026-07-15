@@ -8,7 +8,7 @@ import { createPayment } from '../../api/paymentsApi.js'
 import { PAYMENT_METHODS } from './invoiceMeta.js'
 
 const controlCls = (hasError) =>
-  `w-full rounded-btn border bg-white px-3.5 py-2.5 text-sm text-brand-text outline-none transition-colors focus:ring-2 ${
+  `w-full rounded-btn border bg-surface px-3.5 py-2.5 text-sm text-brand-text outline-none transition-colors focus:ring-2 ${
     hasError
       ? 'border-danger focus:border-danger focus:ring-danger/15'
       : 'border-edge focus:border-primary focus:ring-primary/15'

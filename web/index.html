@@ -11,6 +11,21 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
+    <!-- Aplica el tema ANTES de pintar para evitar el flash blanco al recargar en
+         oscuro. Debe quedar sincronizado con theme/ThemeContext.jsx (misma clave). -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('ape_theme')
+          var dark =
+            stored === 'dark' ||
+            (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          if (dark) document.documentElement.classList.add('dark')
+        } catch (e) {
+          /* localStorage bloqueado: se queda en claro */
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

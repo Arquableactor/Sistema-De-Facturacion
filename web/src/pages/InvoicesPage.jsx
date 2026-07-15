@@ -95,7 +95,7 @@ export default function InvoicesPage() {
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="rounded-btn border border-edge bg-white px-3 py-2 text-sm text-brand-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+              className="rounded-btn border border-edge bg-surface px-3 py-2 text-sm text-brand-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
             >
               {FILTERS.map((f) => (
                 <option key={f.value} value={f.value}>

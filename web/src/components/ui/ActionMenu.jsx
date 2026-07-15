@@ -15,14 +15,28 @@ export default function ActionMenu({ items = [], label = 'Acciones' }) {
 
   const usable = items.filter(Boolean)
 
-  // Cierra al hacer click fuera. Se registra solo mientras está abierto.
+  // Cierra al hacer click fuera o con Esc. Ambos listeners van a nivel de documento:
+  // si Esc solo estuviera en los ítems, abrir con el mouse (sin foco en ninguno) dejaría
+  // el menú imposible de cerrar con teclado. Se registran solo mientras está abierto.
   useEffect(() => {
     if (!open) return
     function onPointerDown(e) {
       if (rootRef.current && !rootRef.current.contains(e.target)) setOpen(false)
     }
+    function onKeyDown(e) {
+      if (e.key === 'Escape') {
+        e.stopPropagation() // que no cierre además el modal que lo contenga
+        setOpen(false)
+        setActiveIndex(-1)
+        buttonRef.current?.focus()
+      }
+    }
     document.addEventListener('mousedown', onPointerDown)
-    return () => document.removeEventListener('mousedown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
   }, [open])
 
   // Al abrir, enfoca la opción activa (para que ↑/↓ y Enter funcionen de una).
@@ -52,10 +66,8 @@ export default function ActionMenu({ items = [], label = 'Acciones' }) {
   }
 
   function onItemKeyDown(e, index) {
-    if (e.key === 'Escape') {
-      e.preventDefault()
-      close()
-    } else if (e.key === 'ArrowDown') {
+    // Esc lo maneja el listener de documento (cubre también abrir con el mouse).
+    if (e.key === 'ArrowDown') {
       e.preventDefault()
       setActiveIndex((index + 1) % usable.length)
     } else if (e.key === 'ArrowUp') {

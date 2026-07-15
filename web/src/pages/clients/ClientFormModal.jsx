@@ -191,7 +191,7 @@ export default function ClientFormModal({ open, client, onClose, onSaved }) {
               id="documentType"
               value={form.documentType}
               onChange={(e) => setDocumentType(e.target.value)}
-              className={`w-full rounded-btn border bg-white px-3.5 py-2.5 text-sm text-brand-text outline-none transition-colors focus:ring-2 ${
+              className={`w-full rounded-btn border bg-surface px-3.5 py-2.5 text-sm text-brand-text outline-none transition-colors focus:ring-2 ${
                 errors.documentType
                   ? 'border-danger focus:border-danger focus:ring-danger/15'
                   : 'border-edge focus:border-primary focus:ring-primary/15'
@@ -218,11 +218,13 @@ export default function ClientFormModal({ open, client, onClose, onSaved }) {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
+          {/* Sin maxLength a propósito: el navegador lo aplicaría al texto CRUDO y al
+              pegar "809-555-0100" (12 chars) lo cortaría a "809-555-01" perdiendo
+              dígitos. sanitizePhone ya limita a 10 DÍGITOS después de quitar la basura. */}
           <Field
             id="phone"
             label="Teléfono"
             inputMode="numeric"
-            maxLength={PHONE_DIGITS}
             value={form.phone}
             onChange={(e) => set('phone', sanitizePhone(e.target.value))}
             error={errors.phone}

@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext.jsx'
 import BrandMark from '../ui/BrandMark.jsx'
+import ThemeToggle from '../ui/ThemeToggle.jsx'
 import {
   IconDashboard,
   IconProjects,
@@ -89,22 +90,28 @@ export default function Sidebar({ collapsed, onToggle }) {
       {/* Pie: tarjeta de usuario + logout */}
       <div className="border-t border-white/10 p-3">
         {collapsed ? (
-          <button
-            onClick={logout}
-            title="Cerrar sesión"
-            className="grid h-10 w-full place-items-center rounded-btn text-white/70 hover:bg-white/10 hover:text-white"
-          >
-            <IconLogout />
-          </button>
+          <div className="space-y-1">
+            <ThemeToggle variant="onBrand" compact />
+            <button
+              onClick={logout}
+              title="Cerrar sesión"
+              className="grid h-10 w-full place-items-center rounded-btn text-white/70 hover:bg-white/10 hover:text-white"
+            >
+              <IconLogout />
+            </button>
+          </div>
         ) : (
           <div className="rounded-card bg-white/[0.06] p-3">
-            <div className="mb-2 min-w-0">
-              <div className="truncate text-sm font-medium text-white">
-                {user?.email || 'Usuario'}
+            <div className="mb-2 flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="truncate text-sm font-medium text-white">
+                  {user?.email || 'Usuario'}
+                </div>
+                <div className="text-xs capitalize text-white/55">
+                  {user?.role ? String(user.role).toLowerCase() : '—'}
+                </div>
               </div>
-              <div className="text-xs capitalize text-white/55">
-                {user?.role ? String(user.role).toLowerCase() : '—'}
-              </div>
+              <ThemeToggle variant="onBrand" compact className="!h-8 !w-8 shrink-0" />
             </div>
             <button
               onClick={logout}

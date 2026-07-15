@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom'
 import BrandMark from '../components/ui/BrandMark.jsx'
+import ThemeToggle from '../components/ui/ThemeToggle.jsx'
 import Badge from '../components/ui/Badge.jsx'
 import Spinner from '../components/ui/Spinner.jsx'
 import Button from '../components/ui/Button.jsx'
@@ -15,7 +16,11 @@ export default function PublicVerifyPage() {
   const { data, loading, error, reload } = useApi(() => verifyPublic(code), [code])
 
   return (
-    <div className="grid min-h-screen place-items-center bg-brand-gradient px-4 py-10">
+    <div className="relative grid min-h-screen place-items-center bg-brand-gradient px-4 py-10">
+      {/* Esta página va fuera del layout (no hay sidebar), así que el toggle vive aquí. */}
+      <div className="absolute right-4 top-4">
+        <ThemeToggle variant="onBrand" />
+      </div>
       <div className="w-full max-w-md">
         <div className="mb-5 flex flex-col items-center text-center">
           <BrandMark size={52} />

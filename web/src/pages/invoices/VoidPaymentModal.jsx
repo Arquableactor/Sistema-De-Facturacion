@@ -65,7 +65,7 @@ export default function VoidPaymentModal({ open, payment, onClose, onVoided }) {
             rows={2}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            className="w-full rounded-btn border border-edge bg-white px-3.5 py-2.5 text-sm text-brand-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+            className="w-full rounded-btn border border-edge bg-surface px-3.5 py-2.5 text-sm text-brand-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
             placeholder="Ej. error de digitación"
           />
         </Field>

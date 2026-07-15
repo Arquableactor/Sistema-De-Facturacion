@@ -5,7 +5,7 @@ const TONES = {
   amber: 'bg-amber-soft text-amber-strong',
   red: 'bg-danger-soft text-danger-strong',
   blue: 'bg-primary-soft text-primary',
-  purple: 'bg-purple-soft text-purple',
+  purple: 'bg-purple-soft text-purple-strong',
 }
 
 export default function Badge({ tone = 'gray', children }) {

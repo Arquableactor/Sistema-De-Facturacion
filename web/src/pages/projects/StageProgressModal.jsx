@@ -42,7 +42,7 @@ export default function StageProgressModal({ open, project, onClose, onSaved }) 
   }
 
   const selectCls =
-    'w-full rounded-btn border border-edge bg-white px-3.5 py-2.5 text-sm text-brand-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/15'
+    'w-full rounded-btn border border-edge bg-surface px-3.5 py-2.5 text-sm text-brand-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/15'
 
   return (
     <Modal

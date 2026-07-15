@@ -1,7 +1,9 @@
+// Los botones sólidos usan los tokens `*-solid`, no el acento: en tema oscuro el
+// acento se aclara (para leerse sobre el fondo) y dejaría el texto blanco ilegible.
 const VARIANTS = {
-  primary: 'bg-primary text-white hover:bg-[#1059bd] shadow-sm',
+  primary: 'bg-primary-solid text-white hover:bg-primary-solid-hover shadow-sm',
   ghost: 'bg-transparent text-muted hover:bg-edge-soft',
-  danger: 'bg-danger text-white hover:bg-danger-strong',
+  danger: 'bg-danger-solid text-white hover:bg-danger-solid-hover',
 }
 
 export default function Button({

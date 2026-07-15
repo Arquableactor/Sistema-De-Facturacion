@@ -172,7 +172,7 @@ export default function ProjectFormModal({ open, project, onClose, onSaved }) {
   }
 
   const selectCls = (hasError) =>
-    `w-full rounded-btn border bg-white px-3.5 py-2.5 text-sm text-brand-text outline-none transition-colors focus:ring-2 disabled:bg-edge-soft disabled:text-muted ${
+    `w-full rounded-btn border bg-surface px-3.5 py-2.5 text-sm text-brand-text outline-none transition-colors focus:ring-2 disabled:bg-edge-soft disabled:text-muted ${
       hasError
         ? 'border-danger focus:border-danger focus:ring-danger/15'
         : 'border-edge focus:border-primary focus:ring-primary/15'
