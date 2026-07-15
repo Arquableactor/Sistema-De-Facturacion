@@ -59,6 +59,12 @@ public class ProjectService : IProjectService
             return validation;
         }
 
+        var dates = ValidateDates(request.FechaInicio, request.FechaClave);
+        if (dates is not null)
+        {
+            return dates;
+        }
+
         var project = new Project
         {
             ClientId = request.ClientId,
@@ -99,6 +105,12 @@ public class ProjectService : IProjectService
         if (!responsable.IsActive)
         {
             return ServiceResult<ProjectResponse>.Validation("El responsable está inactivo.");
+        }
+
+        var dates = ValidateDates(request.FechaInicio, request.FechaClave);
+        if (dates is not null)
+        {
+            return dates;
         }
 
         project.Nombre = request.Nombre.Trim();
@@ -168,6 +180,18 @@ public class ProjectService : IProjectService
             return ServiceResult<ProjectResponse>.Validation("El responsable está inactivo.");
         }
 
+        return null;
+    }
+
+    // La fecha clave (fin) nunca puede ser anterior a la de inicio. Comparamos por DÍA:
+    // ambas se guardan a medianoche, y así una diferencia de horas no genera falsos negativos.
+    private static ServiceResult<ProjectResponse>? ValidateDates(DateTime fechaInicio, DateTime? fechaClave)
+    {
+        if (fechaClave.HasValue && fechaClave.Value.Date < fechaInicio.Date)
+        {
+            return ServiceResult<ProjectResponse>.Validation(
+                "La fecha clave no puede ser anterior a la fecha de inicio.");
+        }
         return null;
     }
 
