@@ -31,7 +31,7 @@ export default function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-brand/40 p-4"
+      className="fixed inset-0 z-50 grid place-items-center bg-scrim/50 p-4"
       onMouseDown={() => !busy && onClose?.()}
     >
       <div

@@ -17,12 +17,29 @@ export function isTruncated(text, limit = TRUNCATE_LIMIT) {
 }
 
 // `as` permite renderizarlo como span (por defecto) u otro elemento inline.
-export default function TruncatedText({ text, limit = TRUNCATE_LIMIT, className = '', as: Tag = 'span' }) {
+// `expandOnClick=false` para usarlo DENTRO de un enlace: ahí el click debe navegar, y
+// un toggle propio se comería el click (además de ser anidamiento interactivo inválido).
+// En ese caso queda como texto simple con el completo en el tooltip.
+export default function TruncatedText({
+  text,
+  limit = TRUNCATE_LIMIT,
+  className = '',
+  as: Tag = 'span',
+  expandOnClick = true,
+}) {
   const [expanded, setExpanded] = useState(false)
   const value = String(text ?? '')
   const long = isTruncated(value, limit)
 
   if (!long) return <Tag className={className}>{value}</Tag>
+
+  if (!expandOnClick) {
+    return (
+      <Tag title={value} className={className}>
+        {truncate(value, limit)}
+      </Tag>
+    )
+  }
 
   return (
     <Tag

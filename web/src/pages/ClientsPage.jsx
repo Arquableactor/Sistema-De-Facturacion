@@ -117,7 +117,9 @@ export default function ClientsPage() {
       <div className="space-y-4 p-6">
         {/* Barra de herramientas: contador + búsqueda + toggle de inactivos */}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-muted">
+          {/* role=status: al filtrar, el lector de pantalla anuncia cuántos quedaron
+              (si no, la búsqueda no da ninguna señal audible). */}
+          <p className="text-sm text-muted" role="status" aria-live="polite">
             {loading
               ? 'Cargando…'
               : query

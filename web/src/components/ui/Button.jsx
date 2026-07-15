@@ -6,6 +6,14 @@ const VARIANTS = {
   danger: 'bg-danger-solid text-white hover:bg-danger-solid-hover',
 }
 
+// El spinner sigue al color del texto de cada variante: en blanco fijo era invisible
+// sobre el fondo claro de un botón ghost (que es el que más usa `loading`, ej. PDF).
+const SPINNERS = {
+  primary: 'border-white/40 border-t-white',
+  danger: 'border-white/40 border-t-white',
+  ghost: 'border-muted/40 border-t-muted',
+}
+
 export default function Button({
   children,
   variant = 'primary',
@@ -23,7 +31,9 @@ export default function Button({
       {...props}
     >
       {loading && (
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+        <span
+          className={`h-4 w-4 animate-spin rounded-full border-2 ${SPINNERS[variant] || SPINNERS.primary}`}
+        />
       )}
       {children}
     </button>

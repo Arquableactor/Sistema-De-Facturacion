@@ -124,13 +124,14 @@ export default function ProjectsPage() {
                     return (
                       <tr key={p.id} className="border-t border-edge hover:bg-edge-soft/40">
                         <td className="px-4 py-3 font-medium">
-                          {/* El nombre largo se trunca; el click en el texto lo expande
-                              (por eso TruncatedText detiene la propagación al enlace). */}
+                          {/* El nombre es el enlace al detalle: aquí el click NAVEGA (como
+                              siempre) y el nombre completo sale en el tooltip. Un toggle de
+                              expandir dentro del enlace se comería ese click. */}
                           <Link
                             to={`/proyectos/${p.id}`}
                             className="text-primary hover:underline"
                           >
-                            <TruncatedText text={p.nombre} />
+                            <TruncatedText text={p.nombre} expandOnClick={false} />
                           </Link>
                         </td>
                         <td className="px-4 py-3 text-muted">{p.clientName}</td>

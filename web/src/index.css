@@ -44,6 +44,9 @@
     --c-orange-strong: 154 74 36; /* #9A4A24 - texto sobre orange-soft */
     --c-orange-soft: 252 238 232; /* #FCEEE8 */
 
+    /* Velo del modal: navy de marca en claro (idéntico al bg-brand/40 original). */
+    --c-scrim: 14 51 88; /* #0E3358 */
+
     --shadow-card: 0 1px 2px rgba(14, 42, 71, 0.04), 0 6px 20px rgba(14, 42, 71, 0.06);
 
     color-scheme: light;
@@ -88,6 +91,10 @@
     --c-orange: 240 138 99; /* #F08A63 */
     --c-orange-strong: 252 184 154; /* #FCB89A - texto sobre orange-soft */
     --c-orange-soft: 58 33 23; /* #3A2117 */
+
+    /* En oscuro el velo debe OSCURECER: el navy de marca sobre un fondo ya oscuro lo
+       aclaraba y el panel quedaba sin separarse del fondo. */
+    --c-scrim: 0 0 0;
 
     --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.35);
 

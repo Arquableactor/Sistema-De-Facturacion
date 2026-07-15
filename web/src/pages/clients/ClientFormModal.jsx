@@ -16,24 +16,40 @@ const DOC_META = Object.fromEntries(DOC_TYPES.map((d) => [d.value, d]))
 const PASSPORT_MAX = 15
 const PHONE_DIGITS = 10
 
-const onlyDigits = (v) => v.replace(/\D/g, '')
-const onlyAlnum = (v) => v.replace(/[^A-Za-z0-9]/g, '')
+const onlyDigits = (v) => String(v ?? '').replace(/\D/g, '')
+const onlyAlnum = (v) => String(v ?? '').replace(/[^A-Za-z0-9]/g, '')
 
-// Sanea lo que el usuario escribe (o lo que viene de la DB con guiones) según el tipo.
-function sanitizeDocument(value, type) {
+// LIMPIAR ≠ RECORTAR, y la diferencia importa:
+//  - limpiar (quitar guiones/espacios/letras según el tipo) NO pierde información;
+//  - recortar al largo del tipo SÍ la pierde.
+// Por eso solo recortamos mientras el usuario TECLEA (ve el tope en vivo). Al CARGAR
+// un valor guardado nunca recortamos: si la fila vieja trae 12 dígitos, se muestran los
+// 12 y la validación lo marca. Recortarlos daría un número distinto y "válido" que se
+// guardaría en silencio, justo el tipo de bug que esta sesión vino a eliminar.
+function cleanDocument(value, type) {
   const meta = DOC_META[type]
-  if (!meta) return value.trim()
-  return meta.digits
-    ? onlyDigits(value).slice(0, meta.digits)
-    : onlyAlnum(value).slice(0, PASSPORT_MAX)
+  if (!meta) return String(value ?? '').trim()
+  return meta.digits ? onlyDigits(value) : onlyAlnum(value)
 }
 
-const sanitizePhone = (value) => onlyDigits(value).slice(0, PHONE_DIGITS)
+function clampDocument(value, type) {
+  const meta = DOC_META[type]
+  if (!meta) return value
+  return value.slice(0, meta.digits ?? PASSPORT_MAX)
+}
+
+const cleanPhone = onlyDigits
+const clampPhone = (value) => value.slice(0, PHONE_DIGITS)
 
 const EMPTY = {
   name: '',
   documentType: '',
   documentNumber: '',
+  // Lo que el usuario tecleó/lo que vino de la DB, SIN limpiar por tipo. Cambiar de tipo
+  // re-deriva el número desde aquí: si no, pasar Pasaporte "AB123456" -> Cédula ("123456")
+  // -> Pasaporte destruía las letras para siempre, y "123456" es un pasaporte válido, así
+  // que se guardaba un documento equivocado sin un solo error.
+  documentRaw: '',
   phone: '',
   email: '',
   installationAddress: '',
@@ -84,10 +100,12 @@ export default function ClientFormModal({ open, client, onClose, onSaved }) {
         ? {
             name: client.name ?? '',
             documentType: client.documentType ?? '',
-            // Saneamos lo guardado: hay filas antiguas con guiones (ej. "809-555-0100"),
-            // y el backend ahora exige dígitos pelados. Así el campo muestra lo que se enviará.
-            documentNumber: sanitizeDocument(client.documentNumber ?? '', client.documentType),
-            phone: sanitizePhone(client.phone ?? ''),
+            // Limpiamos (quitar guiones) pero NO recortamos: hay filas antiguas con
+            // guiones ("809-555-0100" -> "8095550100", intacto) y otras fuera de norma,
+            // que deben verse tal cual para que la validación las marque.
+            documentNumber: cleanDocument(client.documentNumber ?? '', client.documentType),
+            documentRaw: client.documentNumber ?? '',
+            phone: cleanPhone(client.phone ?? ''),
             email: client.email ?? '',
             installationAddress: client.installationAddress ?? '',
           }
@@ -101,10 +119,19 @@ export default function ClientFormModal({ open, client, onClose, onSaved }) {
     setForm((f) => ({ ...f, [field]: value }))
   }
 
-  // Al cambiar el tipo, el número que ya estaba escrito se re-sanea con la regla nueva
-  // (ej. venías de Pasaporte "AB12" y pasas a Cédula -> quedan solo los dígitos).
+  // Al cambiar el tipo re-derivamos el número desde el RAW, no desde el valor ya limpio:
+  // así ir a Cédula y volver a Pasaporte recupera las letras en vez de perderlas.
   function setDocumentType(type) {
-    setForm((f) => ({ ...f, documentType: type, documentNumber: sanitizeDocument(f.documentNumber, type) }))
+    setForm((f) => ({ ...f, documentType: type, documentNumber: cleanDocument(f.documentRaw, type) }))
+  }
+
+  // Al teclear sí recortamos al largo del tipo: el tope se ve en vivo, no es silencioso.
+  function setDocumentNumber(value) {
+    setForm((f) => ({
+      ...f,
+      documentRaw: value,
+      documentNumber: clampDocument(cleanDocument(value, f.documentType), f.documentType),
+    }))
   }
 
   // La etiqueta y el placeholder del documento se adaptan al tipo elegido.
@@ -211,7 +238,7 @@ export default function ClientFormModal({ open, client, onClose, onSaved }) {
             label={docMeta ? `Número de ${docMeta.label.toLowerCase()}` : 'Número de documento'}
             inputMode={docMeta?.digits ? 'numeric' : 'text'}
             value={form.documentNumber}
-            onChange={(e) => set('documentNumber', sanitizeDocument(e.target.value, form.documentType))}
+            onChange={(e) => setDocumentNumber(e.target.value)}
             error={errors.documentNumber}
             placeholder={docPlaceholder}
           />
@@ -226,7 +253,7 @@ export default function ClientFormModal({ open, client, onClose, onSaved }) {
             label="Teléfono"
             inputMode="numeric"
             value={form.phone}
-            onChange={(e) => set('phone', sanitizePhone(e.target.value))}
+            onChange={(e) => set('phone', clampPhone(cleanPhone(e.target.value)))}
             error={errors.phone}
             placeholder="8090000000"
           />

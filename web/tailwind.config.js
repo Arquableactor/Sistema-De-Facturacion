@@ -41,6 +41,7 @@ export default {
         purple: { DEFAULT: themed('purple'), strong: themed('purple-strong'), soft: themed('purple-soft') },
         orange: { DEFAULT: themed('orange'), strong: themed('orange-strong'), soft: themed('orange-soft') },
 
+        scrim: themed('scrim'), // velo del modal
         appbg: themed('appbg'),
         surface: themed('surface'),
         edge: { DEFAULT: themed('edge'), soft: themed('edge-soft') },

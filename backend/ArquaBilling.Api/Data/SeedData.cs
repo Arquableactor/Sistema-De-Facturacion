@@ -91,7 +91,7 @@ public static class SeedData
             Name = "Cliente Demo Solar",
             DocumentType = DocumentType.Rnc,
             DocumentNumber = "130000001",
-            Phone = "809-555-0100",
+            Phone = "8095550100",
             Email = "demo@cliente.local",
             InstallationAddress = "Av. Demo 123, Santo Domingo",
             IsActive = true,

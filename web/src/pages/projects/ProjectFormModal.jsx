@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Modal from '../../components/ui/Modal.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Field from '../../components/ui/Field.jsx'
@@ -100,7 +100,15 @@ export default function ProjectFormModal({ open, project, onClose, onSaved }) {
   // esos campos vacíos y al guardar borraba fechaClave y notes. Por eso pedimos
   // siempre GET /api/projects/{id} al editar.
   const projectId = project?.id ?? null
+  // Generación de la carga en curso. El componente NO se desmonta al cerrar (el modal
+  // solo deja de pintar), así que sin esto una respuesta lenta del proyecto A podía
+  // llegar DESPUÉS de abrir el B y escribir los datos de A en el formulario del B —
+  // y al guardar, sobreescribir B con los valores de A.
+  const loadIdRef = useRef(0)
+
   const loadOptions = useCallback(() => {
+    const loadId = ++loadIdRef.current
+    const current = () => loadId === loadIdRef.current
     setOptionsLoading(true)
     setOptionsError('')
     // Limpiamos mientras carga: si no, al reabrir para OTRO proyecto se verían por un
@@ -112,14 +120,20 @@ export default function ProjectFormModal({ open, project, onClose, onSaved }) {
       projectId != null ? getProject(projectId) : Promise.resolve(null),
     ])
       .then(([cs, us, detail]) => {
+        if (!current()) return // respuesta de una carga anterior: se descarta
         setClients(cs || [])
         setUsers(us || [])
         setForm(detail ? fromProject(detail) : EMPTY)
         setErrors({})
         setFormError('')
       })
-      .catch((err) => setOptionsError(err.message || 'No se pudieron cargar los datos.'))
-      .finally(() => setOptionsLoading(false))
+      .catch((err) => {
+        if (!current()) return
+        setOptionsError(err.message || 'No se pudieron cargar los datos.')
+      })
+      .finally(() => {
+        if (current()) setOptionsLoading(false)
+      })
   }, [projectId])
 
   useEffect(() => {
@@ -207,7 +221,10 @@ export default function ProjectFormModal({ open, project, onClose, onSaved }) {
           </Button>
         </div>
       ) : (
-        <form id="project-form" onSubmit={onSubmit} className="space-y-4" noValidate>
+        <form id="project-form" onSubmit={onSubmit} noValidate>
+          {/* Deshabilitado mientras carga: los campos arrancan vacíos y la respuesta los
+              repuebla, así que lo que se escribiera antes se perdería sin aviso. */}
+          <fieldset disabled={optionsLoading} className="space-y-4 border-0 p-0 m-0">
           {optionsLoading && (
             <div className="flex items-center gap-2 rounded-btn bg-primary-soft px-3 py-2 text-sm text-primary">
               <Spinner size={14} /> {isEdit ? 'Cargando el proyecto…' : 'Cargando clientes y responsables…'}
@@ -364,6 +381,7 @@ export default function ProjectFormModal({ open, project, onClose, onSaved }) {
               placeholder="Observaciones del proyecto…"
             />
           </Field>
+          </fieldset>
         </form>
       )}
     </Modal>
