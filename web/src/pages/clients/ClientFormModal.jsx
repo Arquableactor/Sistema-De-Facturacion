@@ -5,11 +5,30 @@ import Field from '../../components/ui/Field.jsx'
 import { createClient, updateClient } from '../../api/clientsApi.js'
 import { mapDetails } from '../../lib/apiErrors.js'
 
+// Reglas de documento por tipo — ESPEJO de ClientDocumentRules en el backend.
+// Cédula y RNC son numéricos puros; el pasaporte es alfanumérico de 6 a 15.
 const DOC_TYPES = [
-  { value: 'Cedula', label: 'Cédula' },
-  { value: 'Rnc', label: 'RNC' },
+  { value: 'Cedula', label: 'Cédula', digits: 11 },
+  { value: 'Rnc', label: 'RNC', digits: 9 },
   { value: 'Passport', label: 'Pasaporte' },
 ]
+const DOC_META = Object.fromEntries(DOC_TYPES.map((d) => [d.value, d]))
+const PASSPORT_MAX = 15
+const PHONE_DIGITS = 10
+
+const onlyDigits = (v) => v.replace(/\D/g, '')
+const onlyAlnum = (v) => v.replace(/[^A-Za-z0-9]/g, '')
+
+// Sanea lo que el usuario escribe (o lo que viene de la DB con guiones) según el tipo.
+function sanitizeDocument(value, type) {
+  const meta = DOC_META[type]
+  if (!meta) return value.trim()
+  return meta.digits
+    ? onlyDigits(value).slice(0, meta.digits)
+    : onlyAlnum(value).slice(0, PASSPORT_MAX)
+}
+
+const sanitizePhone = (value) => onlyDigits(value).slice(0, PHONE_DIGITS)
 
 const EMPTY = {
   name: '',
@@ -20,12 +39,30 @@ const EMPTY = {
   installationAddress: '',
 }
 
+function validateDocument(f) {
+  if (!f.documentNumber.trim()) return 'El documento es obligatorio.'
+  const meta = DOC_META[f.documentType]
+  if (!meta) return undefined // sin tipo elegido ya se reporta en documentType
+  if (meta.digits) {
+    if (!/^\d+$/.test(f.documentNumber) || f.documentNumber.length !== meta.digits) {
+      return `${meta.label} debe tener exactamente ${meta.digits} dígitos, sin letras ni guiones.`
+    }
+    return undefined
+  }
+  if (!/^[A-Za-z0-9]{6,15}$/.test(f.documentNumber)) {
+    return 'El pasaporte debe ser alfanumérico de 6 a 15 caracteres.'
+  }
+  return undefined
+}
+
 function validate(f) {
   const e = {}
   if (!f.name.trim()) e.name = 'El nombre es obligatorio.'
   if (!f.documentType) e.documentType = 'Selecciona el tipo de documento.'
-  if (!f.documentNumber.trim()) e.documentNumber = 'El documento es obligatorio.'
+  const doc = validateDocument(f)
+  if (doc) e.documentNumber = doc
   if (!f.phone.trim()) e.phone = 'El teléfono es obligatorio.'
+  else if (!/^\d{10}$/.test(f.phone)) e.phone = 'El teléfono debe tener exactamente 10 dígitos.'
   if (!f.installationAddress.trim()) e.installationAddress = 'La dirección es obligatoria.'
   if (f.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim()))
     e.email = 'Correo electrónico inválido.'
@@ -47,8 +84,10 @@ export default function ClientFormModal({ open, client, onClose, onSaved }) {
         ? {
             name: client.name ?? '',
             documentType: client.documentType ?? '',
-            documentNumber: client.documentNumber ?? '',
-            phone: client.phone ?? '',
+            // Saneamos lo guardado: hay filas antiguas con guiones (ej. "809-555-0100"),
+            // y el backend ahora exige dígitos pelados. Así el campo muestra lo que se enviará.
+            documentNumber: sanitizeDocument(client.documentNumber ?? '', client.documentType),
+            phone: sanitizePhone(client.phone ?? ''),
             email: client.email ?? '',
             installationAddress: client.installationAddress ?? '',
           }
@@ -61,6 +100,20 @@ export default function ClientFormModal({ open, client, onClose, onSaved }) {
   function set(field, value) {
     setForm((f) => ({ ...f, [field]: value }))
   }
+
+  // Al cambiar el tipo, el número que ya estaba escrito se re-sanea con la regla nueva
+  // (ej. venías de Pasaporte "AB12" y pasas a Cédula -> quedan solo los dígitos).
+  function setDocumentType(type) {
+    setForm((f) => ({ ...f, documentType: type, documentNumber: sanitizeDocument(f.documentNumber, type) }))
+  }
+
+  // La etiqueta y el placeholder del documento se adaptan al tipo elegido.
+  const docMeta = DOC_META[form.documentType]
+  const docPlaceholder = docMeta
+    ? docMeta.digits
+      ? `${docMeta.digits} dígitos`
+      : 'AB123456'
+    : 'Selecciona el tipo primero'
 
   async function onSubmit(e) {
     e.preventDefault()
@@ -137,7 +190,7 @@ export default function ClientFormModal({ open, client, onClose, onSaved }) {
             <select
               id="documentType"
               value={form.documentType}
-              onChange={(e) => set('documentType', e.target.value)}
+              onChange={(e) => setDocumentType(e.target.value)}
               className={`w-full rounded-btn border bg-white px-3.5 py-2.5 text-sm text-brand-text outline-none transition-colors focus:ring-2 ${
                 errors.documentType
                   ? 'border-danger focus:border-danger focus:ring-danger/15'
@@ -155,11 +208,12 @@ export default function ClientFormModal({ open, client, onClose, onSaved }) {
 
           <Field
             id="documentNumber"
-            label="Número de documento"
+            label={docMeta ? `Número de ${docMeta.label.toLowerCase()}` : 'Número de documento'}
+            inputMode={docMeta?.digits ? 'numeric' : 'text'}
             value={form.documentNumber}
-            onChange={(e) => set('documentNumber', e.target.value)}
+            onChange={(e) => set('documentNumber', sanitizeDocument(e.target.value, form.documentType))}
             error={errors.documentNumber}
-            placeholder="000-0000000-0"
+            placeholder={docPlaceholder}
           />
         </div>
 
@@ -167,10 +221,12 @@ export default function ClientFormModal({ open, client, onClose, onSaved }) {
           <Field
             id="phone"
             label="Teléfono"
+            inputMode="numeric"
+            maxLength={PHONE_DIGITS}
             value={form.phone}
-            onChange={(e) => set('phone', e.target.value)}
+            onChange={(e) => set('phone', sanitizePhone(e.target.value))}
             error={errors.phone}
-            placeholder="809-000-0000"
+            placeholder="8090000000"
           />
           <Field
             id="email"

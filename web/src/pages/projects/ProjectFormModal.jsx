@@ -69,6 +69,11 @@ function validate(f) {
   const p = num(f.progreso)
   if (Number.isNaN(p) || p < 0 || p > 100) e.progreso = 'Progreso 0–100.'
   if (!f.fechaInicio) e.fechaInicio = 'La fecha de inicio es obligatoria.'
+  // La fecha clave (fin) nunca puede ser anterior al inicio. Compara 'YYYY-MM-DD' como
+  // texto: ese formato ordena igual que la fecha, sin líos de zona horaria.
+  if (f.fechaInicio && f.fechaClave && f.fechaClave < f.fechaInicio) {
+    e.fechaClave = 'La fecha clave no puede ser anterior a la fecha de inicio.'
+  }
   if (Number.isNaN(num(f.costo)) || num(f.costo) < 0) e.costo = 'Costo inválido (≥ 0).'
   if (Number.isNaN(num(f.presupuesto)) || num(f.presupuesto) < 0) e.presupuesto = 'Presupuesto inválido (≥ 0).'
   return e
@@ -311,10 +316,13 @@ export default function ProjectFormModal({ open, project, onClose, onSaved }) {
               onChange={(e) => set('fechaInicio', e.target.value)}
               error={errors.fechaInicio}
             />
+            {/* min = fechaInicio: el propio date-picker ya impide elegir una fecha
+                anterior. La validación V1 cubre el caso de escribirla a mano. */}
             <Field
               id="fechaClave"
               label="Fecha clave (opcional)"
               type="date"
+              min={form.fechaInicio || undefined}
               value={form.fechaClave}
               onChange={(e) => set('fechaClave', e.target.value)}
               error={errors.fechaClave}

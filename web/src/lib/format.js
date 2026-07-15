@@ -14,6 +14,14 @@ export function date(value) {
   return `${dd}/${mm}/${d.getFullYear()}`
 }
 
+// Teléfono: se guardan 10 dígitos pelados; para MOSTRAR los agrupamos 809-000-0000.
+// Filas antiguas con otro formato se muestran tal cual (no inventamos dígitos).
+export function phone(value) {
+  const digits = String(value ?? '').replace(/\D/g, '')
+  if (digits.length !== 10) return value || '—'
+  return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`
+}
+
 // 'YYYY-MM-DD' de HOY en zona LOCAL (no UTC): toISOString() daría el día UTC y en
 // RD (UTC-4) saltaría a "mañana" de noche. Default para inputs type="date".
 export function today() {
