@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import Topbar from '../components/layout/Topbar.jsx'
 import Button from '../components/ui/Button.jsx'
 import Badge from '../components/ui/Badge.jsx'
+import TruncatedText from '../components/ui/TruncatedText.jsx'
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx'
 import DataState from '../components/data/DataState.jsx'
 import { useToast } from '../components/ui/Toast.jsx'
@@ -142,7 +143,7 @@ export default function InvoicesPage() {
                         <td className="px-4 py-3 font-mono text-xs text-muted">{inv.ncf || '—'}</td>
                         <td className="px-4 py-3 text-muted">{inv.clientName}</td>
                         <td className="px-4 py-3 text-muted">
-                          {projectName.get(inv.projectId) || `#${inv.projectId}`}
+                          <TruncatedText text={projectName.get(inv.projectId) || `#${inv.projectId}`} />
                         </td>
                         <td className="px-4 py-3 text-muted">{date(inv.date)}</td>
                         <td className="px-4 py-3">

@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import Topbar from '../components/layout/Topbar.jsx'
 import Button from '../components/ui/Button.jsx'
 import Badge from '../components/ui/Badge.jsx'
+import ActionMenu from '../components/ui/ActionMenu.jsx'
+import TruncatedText from '../components/ui/TruncatedText.jsx'
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx'
 import DataState from '../components/data/DataState.jsx'
 import { useToast } from '../components/ui/Toast.jsx'
@@ -122,11 +124,13 @@ export default function ProjectsPage() {
                     return (
                       <tr key={p.id} className="border-t border-edge hover:bg-edge-soft/40">
                         <td className="px-4 py-3 font-medium">
+                          {/* El nombre largo se trunca; el click en el texto lo expande
+                              (por eso TruncatedText detiene la propagación al enlace). */}
                           <Link
                             to={`/proyectos/${p.id}`}
                             className="text-primary hover:underline"
                           >
-                            {p.nombre}
+                            <TruncatedText text={p.nombre} />
                           </Link>
                         </td>
                         <td className="px-4 py-3 text-muted">{p.clientName}</td>
@@ -148,29 +152,21 @@ export default function ProjectsPage() {
                           </Badge>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex justify-end gap-1">
-                            {canWrite && (
-                              <Button variant="ghost" className="px-2.5 py-1.5" onClick={() => openEdit(p)}>
-                                Editar
-                              </Button>
-                            )}
-                            {/* Etapa/progreso: los tres roles pueden. */}
-                            <Button
-                              variant="ghost"
-                              className="px-2.5 py-1.5"
-                              onClick={() => setStageProject(p)}
-                            >
-                              Etapa
-                            </Button>
-                            {canDelete && p.isActive && (
-                              <Button
-                                variant="ghost"
-                                className="px-2.5 py-1.5 text-danger-strong hover:bg-danger-soft"
-                                onClick={() => setToDelete(p)}
-                              >
-                                Eliminar
-                              </Button>
-                            )}
+                          <div className="flex justify-end">
+                            <ActionMenu
+                              label={`Acciones de ${p.nombre}`}
+                              items={[
+                                canWrite && { label: 'Editar', onClick: () => openEdit(p) },
+                                // Etapa/progreso: los tres roles pueden.
+                                { label: 'Etapa y progreso', onClick: () => setStageProject(p) },
+                                canDelete &&
+                                  p.isActive && {
+                                    label: 'Eliminar',
+                                    tone: 'danger',
+                                    onClick: () => setToDelete(p),
+                                  },
+                              ]}
+                            />
                           </div>
                         </td>
                       </tr>
