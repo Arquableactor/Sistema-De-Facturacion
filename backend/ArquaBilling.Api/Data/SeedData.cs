@@ -16,17 +16,15 @@ public static class SeedData
         }
 
         var now = DateTime.UtcNow;
+        // Las fechas de proyecto se guardan a medianoche (el front manda 'YYYY-MM-DD');
+        // sembramos igual para que los datos demo se comparen como los reales.
+        var hoy = now.Date;
 
-        var admin = new User
-        {
-            FullName = "Administrador",
-            Email = "admin@arqua.local",
-            Role = UserRole.Admin,
-            IsActive = true,
-            CreatedAt = now
-        };
-        admin.PasswordHash = hasher.HashPassword(admin, "Admin123*");
-        db.Users.Add(admin);
+        // ----- Usuarios: uno por rol, para poder probar la matriz de permisos -----
+        var admin = NuevoUsuario(hasher, "Administrador", "admin@arqua.local", UserRole.Admin, "Admin123*", now);
+        var ventas = NuevoUsuario(hasher, "Laura Ventas", "ventas@arqua.local", UserRole.Sales, "Ventas123*", now);
+        var tecnico = NuevoUsuario(hasher, "Pedro Técnico", "tecnico@arqua.local", UserRole.Technician, "Tecnico123*", now);
+        db.Users.AddRange(admin, ventas, tecnico);
 
         db.NcfSequences.Add(new NcfSequence
         {
@@ -85,49 +83,94 @@ public static class SeedData
         };
         db.Products.AddRange(panel, inversor, bateria);
 
-        // ----- Cliente demo -----
-        var clienteDemo = new Client
-        {
-            Name = "Cliente Demo Solar",
-            DocumentType = DocumentType.Rnc,
-            DocumentNumber = "130000001",
-            Phone = "8095550100",
-            Email = "demo@cliente.local",
-            InstallationAddress = "Av. Demo 123, Santo Domingo",
-            IsActive = true,
-            CreatedAt = now
-        };
-        db.Clients.Add(clienteDemo);
+        // ----- Clientes: uno por tipo de documento, todos cumpliendo las reglas
+        // (cédula 11 dígitos, RNC 9 dígitos, pasaporte alfanumérico; teléfono 10 dígitos
+        // pelados, sin guiones). Ver ClientDocumentRules. -----
+        var clienteDemo = NuevoCliente("Cliente Demo Solar", DocumentType.Rnc, "130000001",
+            "8095550100", "demo@cliente.local", "Av. Demo 123, Santo Domingo", now);
+        var clienteCedula = NuevoCliente("María Fernández", DocumentType.Cedula, "00112345678",
+            "8295551234", "maria.fernandez@correo.local", "Calle Duarte 45, Santiago", now);
+        var clienteEmpresa = NuevoCliente("Inversiones del Caribe SRL", DocumentType.Rnc, "131222333",
+            "8495559876", "contacto@invcaribe.local", "Av. Winston Churchill 1099, Santo Domingo", now);
+        var clientePasaporte = NuevoCliente("John Miller", DocumentType.Passport, "AB1234567",
+            "8095557788", null, "Bávaro, Punta Cana, La Altagracia", now);
+        db.Clients.AddRange(clienteDemo, clienteCedula, clienteEmpresa, clientePasaporte);
 
-        // ----- Proyecto demo (responsable = admin) con equipos instalados -----
-        var proyectoDemo = new Project
-        {
-            Client = clienteDemo,
-            Nombre = "Instalación Residencial Demo",
-            CapacidadKwp = 5.5m,
-            Etapa = ProjectStage.Montaje,
-            Progreso = 60,
-            FechaInicio = now,
-            FechaClave = null,
-            Responsable = admin,
-            Costo = 250000.00m,
-            Presupuesto = 300000.00m,
-            Notes = "Proyecto demo sembrado.",
-            IsActive = true,
-            CreatedAt = now
-        };
-        db.Projects.Add(proyectoDemo);
+        // ----- Proyectos: la fecha clave nunca es anterior al inicio (regla del
+        // ProjectService); uno la deja en null porque es opcional. -----
+        var proyectoDemo = NuevoProyecto(clienteDemo, admin, "Instalación Residencial Demo",
+            5.5m, ProjectStage.Montaje, 60, hoy.AddDays(-30), hoy.AddDays(30),
+            250000.00m, 300000.00m, "Proyecto demo sembrado.", now);
+        var proyectoComercial = NuevoProyecto(clienteEmpresa, tecnico, "Instalación Comercial Caribe",
+            25.0m, ProjectStage.Diseno, 25, hoy.AddDays(-10), hoy.AddDays(60),
+            980000.00m, 1100000.00m, "Nave industrial, 2 inversores.", now);
+        var proyectoSantiago = NuevoProyecto(clienteCedula, ventas, "Instalación Residencial Santiago",
+            3.3m, ProjectStage.Visita, 10, hoy, null, // sin fecha clave: es opcional
+            120000.00m, 150000.00m, null, now);
+        db.Projects.AddRange(proyectoDemo, proyectoComercial, proyectoSantiago);
 
         // Snapshots de Marca/Modelo/WarrantyMonths tomados del producto.
         db.EquiposInstalados.AddRange(
             NuevoEquipo(panel, proyectoDemo, clienteDemo, "PNL-DEMO-0001", now),
             NuevoEquipo(inversor, proyectoDemo, clienteDemo, "INV-DEMO-0001", now),
-            NuevoEquipo(bateria, proyectoDemo, clienteDemo, "BAT-DEMO-0001", now));
+            NuevoEquipo(bateria, proyectoDemo, clienteDemo, "BAT-DEMO-0001", now),
+            NuevoEquipo(panel, proyectoComercial, clienteEmpresa, "PNL-CARIBE-0001", now),
+            NuevoEquipo(inversor, proyectoComercial, clienteEmpresa, "INV-CARIBE-0001", now));
 
         // Una sola transacción: EF ordena los inserts por las navegaciones (no se siembran
         // facturas ni garantías; esas se prueban a mano).
         await db.SaveChangesAsync();
     }
+
+    private static User NuevoUsuario(
+        PasswordHasher<User> hasher, string fullName, string email, UserRole role,
+        string password, DateTime now)
+    {
+        var user = new User
+        {
+            FullName = fullName,
+            Email = email,
+            Role = role,
+            IsActive = true,
+            CreatedAt = now
+        };
+        user.PasswordHash = hasher.HashPassword(user, password);
+        return user;
+    }
+
+    private static Client NuevoCliente(
+        string name, DocumentType documentType, string documentNumber, string phone,
+        string? email, string address, DateTime now) => new()
+    {
+        Name = name,
+        DocumentType = documentType,
+        DocumentNumber = documentNumber,
+        Phone = phone,
+        Email = email,
+        InstallationAddress = address,
+        IsActive = true,
+        CreatedAt = now
+    };
+
+    private static Project NuevoProyecto(
+        Client client, User responsable, string nombre, decimal capacidadKwp, ProjectStage etapa,
+        int progreso, DateTime fechaInicio, DateTime? fechaClave, decimal costo, decimal presupuesto,
+        string? notes, DateTime now) => new()
+    {
+        Client = client,
+        Nombre = nombre,
+        CapacidadKwp = capacidadKwp,
+        Etapa = etapa,
+        Progreso = progreso,
+        FechaInicio = fechaInicio,
+        FechaClave = fechaClave,
+        Responsable = responsable,
+        Costo = costo,
+        Presupuesto = presupuesto,
+        Notes = notes,
+        IsActive = true,
+        CreatedAt = now
+    };
 
     private static EquipoInstalado NuevoEquipo(
         Product product, Project project, Client client, string serial, DateTime now) => new()
