@@ -1,5 +1,6 @@
 using ArquaBilling.Api.Common;
 using ArquaBilling.Api.Data;
+using ArquaBilling.Api.DTOs.Clients;
 using ArquaBilling.Api.DTOs.Solicitudes;
 using ArquaBilling.Api.Entities;
 using ArquaBilling.Api.Helpers;
@@ -13,10 +14,14 @@ public class SolicitudService : ISolicitudService
     private const int DiasDelMes = 30; // mes comercial: el estimado es orientativo
 
     private readonly AppDbContext _db;
+    private readonly IClientService _clientService;
 
-    public SolicitudService(AppDbContext db)
+    public SolicitudService(AppDbContext db, IClientService clientService)
     {
         _db = db;
+        // Reusamos la creación (y validación) de Client al aprobar: comparten el mismo
+        // AppDbContext (scoped), así que el CreateAsync se enlista en nuestra transacción.
+        _clientService = clientService;
     }
 
     public async Task<IReadOnlyList<ApplianceResponse>> GetAppliancesAsync()
@@ -107,6 +112,166 @@ public class SolicitudService : ISolicitudService
     // Solo consumo (kWh). Sin costo en RD$: ver SolicitudCreatedResponse.
     private static SolicitudCreatedResponse BuildResponse(string numero, decimal kwhDia)
         => new(numero, kwhDia, Round(kwhDia * DiasDelMes));
+
+    // ==================== Bandeja interna ====================
+
+    public async Task<IReadOnlyList<SolicitudListItem>> GetAllAsync(SolicitudEstado? estado, string? search)
+    {
+        var query = _db.SolicitudesClientes.AsNoTracking().Include(s => s.RevisadoPor).AsQueryable();
+
+        if (estado.HasValue)
+        {
+            query = query.Where(s => s.Estado == estado.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            query = query.Where(s =>
+                EF.Functions.ILike(s.Nombre, $"%{term}%") ||
+                EF.Functions.ILike(s.DocumentNumber, $"%{term}%"));
+        }
+
+        // Pendientes primero (0 antes que 1/2 del enum), luego por fecha desc: la bandeja
+        // pone arriba lo que espera acción.
+        var rows = await query
+            .OrderBy(s => s.Estado == SolicitudEstado.Pendiente ? 0 : 1)
+            .ThenByDescending(s => s.CreatedAt)
+            .ToListAsync();
+
+        return rows.Select(ToListItem).ToList();
+    }
+
+    public async Task<ServiceResult<SolicitudDetailResponse>> GetByIdAsync(int id)
+    {
+        var s = await _db.SolicitudesClientes.AsNoTracking()
+            .Include(x => x.RevisadoPor)
+            .Include(x => x.Equipos)
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        return s is null
+            ? ServiceResult<SolicitudDetailResponse>.NotFound("Solicitud no encontrada.")
+            : ServiceResult<SolicitudDetailResponse>.Success(ToDetail(s));
+    }
+
+    public async Task<ServiceResult<SolicitudDetailResponse>> AprobarAsync(
+        int id, AprobarSolicitudRequest request, int currentUserId)
+    {
+        await using var tx = await _db.Database.BeginTransactionAsync();
+
+        // 1) Bloqueo de fila (FOR UPDATE): serializa aprobaciones de la MISMA solicitud
+        //    (doble-click / dos revisores). ToListAsync ejecuta el SQL crudo tal cual.
+        var solicitud = (await _db.SolicitudesClientes
+            .FromSqlRaw("SELECT * FROM \"SolicitudesClientes\" WHERE \"Id\" = {0} FOR UPDATE", id)
+            .ToListAsync()).FirstOrDefault();
+
+        if (solicitud is null)
+        {
+            return ServiceResult<SolicitudDetailResponse>.NotFound("Solicitud no encontrada.");
+        }
+        if (solicitud.Estado != SolicitudEstado.Pendiente)
+        {
+            return ServiceResult<SolicitudDetailResponse>.Conflict("La solicitud ya fue revisada.");
+        }
+
+        // 2) BLOQUEO POR CÉDULA con el documento de la SOLICITUD (nunca del body). Solo
+        //    contra clientes ACTIVOS: es la misma unicidad que aplica el alta manual de
+        //    Client. Traemos el nombre para el mensaje.
+        var existente = await _db.Clients.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.IsActive && c.DocumentNumber == solicitud.DocumentNumber);
+        if (existente is not null)
+        {
+            return ServiceResult<SolicitudDetailResponse>.Conflict(
+                $"Ya existe un cliente con este documento (Cliente: {existente.Name}).");
+        }
+
+        // 3) Crear el Cliente reusando ClientService (misma validación + creación). El
+        //    documento SIEMPRE sale de la solicitud; los demás campos son los corregidos.
+        var clientReq = new ClientCreateRequest
+        {
+            Name = request.Nombre.Trim(),
+            DocumentType = solicitud.DocumentType,      // ← de la solicitud, no del body
+            DocumentNumber = solicitud.DocumentNumber,  // ← de la solicitud, no del body
+            Phone = request.Phone.Trim(),
+            Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
+            InstallationAddress = ComponerDireccion(request.Ubicacion, request.Provincia)
+        };
+
+        var created = await _clientService.CreateAsync(clientReq);
+        if (!created.IsSuccess)
+        {
+            // No debería ocurrir (ya chequeamos el duplicado), pero por si acaso: propagamos.
+            return created.Status switch
+            {
+                ResultStatus.Conflict => ServiceResult<SolicitudDetailResponse>.Conflict(created.Error!),
+                ResultStatus.Validation => ServiceResult<SolicitudDetailResponse>.Validation(created.Error!),
+                _ => ServiceResult<SolicitudDetailResponse>.Validation(created.Error ?? "No se pudo crear el cliente.")
+            };
+        }
+
+        // 4) Marcar la solicitud como aprobada. NO tocamos sus datos personales: quedan
+        //    como el prospecto los envió (registro histórico); las correcciones viven en
+        //    el Cliente nuevo. `solicitud` viene trackeada desde el FromSqlRaw.
+        solicitud.Estado = SolicitudEstado.Aprobada;
+        solicitud.RevisadoPorUserId = currentUserId;
+        solicitud.RevisadoAt = DateTime.UtcNow;
+        solicitud.ClienteCreadoId = created.Value!.Id;
+
+        await _db.SaveChangesAsync();
+        await tx.CommitAsync();
+
+        return await GetByIdAsync(id);
+    }
+
+    public async Task<ServiceResult<SolicitudDetailResponse>> RechazarAsync(
+        int id, RechazarSolicitudRequest request, int currentUserId)
+    {
+        var solicitud = await _db.SolicitudesClientes.FirstOrDefaultAsync(x => x.Id == id);
+        if (solicitud is null)
+        {
+            return ServiceResult<SolicitudDetailResponse>.NotFound("Solicitud no encontrada.");
+        }
+        if (solicitud.Estado != SolicitudEstado.Pendiente)
+        {
+            return ServiceResult<SolicitudDetailResponse>.Conflict("La solicitud ya fue revisada.");
+        }
+
+        solicitud.Estado = SolicitudEstado.Rechazada;
+        solicitud.RevisadoPorUserId = currentUserId;
+        solicitud.RevisadoAt = DateTime.UtcNow;
+        solicitud.MotivoRechazo = request.MotivoRechazo.Trim();
+
+        await _db.SaveChangesAsync();
+        return await GetByIdAsync(id);
+    }
+
+    // Dirección del Cliente = ubicación + provincia (opción A). Solo anexa la provincia
+    // si viene y no está YA contenida en la ubicación, para no duplicar ("...Santiago,
+    // Santiago"). Client no tiene columna de provincia, así que este es su único destino.
+    private static string ComponerDireccion(string ubicacion, string? provincia)
+    {
+        var dir = ubicacion.Trim();
+        var prov = provincia?.Trim();
+        if (string.IsNullOrWhiteSpace(prov))
+        {
+            return dir;
+        }
+        var yaContenida = dir.Contains(prov, StringComparison.OrdinalIgnoreCase);
+        return yaContenida ? dir : $"{dir}, {prov}";
+    }
+
+    private static SolicitudListItem ToListItem(SolicitudCliente s) => new(
+        s.Id, s.NumeroSolicitud, s.Nombre, s.DocumentType, s.DocumentNumber, s.Phone, s.Email,
+        s.Provincia, s.Ubicacion, s.FacturaLuzMensual, s.ConsumoEstimadoKwhDia, s.Estado, s.CreatedAt,
+        s.RevisadoAt, s.RevisadoPor?.FullName, s.MotivoRechazo, s.ClienteCreadoId);
+
+    private static SolicitudDetailResponse ToDetail(SolicitudCliente s) => new(
+        s.Id, s.NumeroSolicitud, s.Nombre, s.DocumentType, s.DocumentNumber, s.Phone, s.Email,
+        s.Provincia, s.Ubicacion, s.FacturaLuzMensual, s.ConsumoEstimadoKwhDia, s.Estado, s.Notas,
+        s.CreatedAt, s.RevisadoAt, s.RevisadoPor?.FullName, s.MotivoRechazo, s.ClienteCreadoId,
+        s.Equipos.OrderBy(e => e.Id).Select(e => new SolicitudEquipoLine(
+            e.NombreEquipo, e.Watts, e.Cantidad, e.HorasPorDia,
+            Round(e.Watts * e.Cantidad * e.HorasPorDia / 1000m))).ToList());
 
     private static decimal Round(decimal value) => Math.Round(value, 2, MidpointRounding.AwayFromZero);
 
