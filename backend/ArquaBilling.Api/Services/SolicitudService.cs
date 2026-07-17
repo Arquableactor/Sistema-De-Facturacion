@@ -65,10 +65,15 @@ public class SolicitudService : ISolicitudService
         // 3) HONEYPOT: el campo `website` está oculto en el formulario, así que solo un
         //    bot lo llena. Devolvemos un 201 creíble (con su estimado real) pero NO
         //    escribimos nada: si respondiéramos un error, el bot aprendería a evitarlo.
+        //    El folio también tiene que ser creíble y VARIAR entre envíos: uno fijo
+        //    (ej. siempre -000000) delataría la trampa a quien enviara dos veces y
+        //    comparara. No colisiona con nada real porque no se guarda, y el folio no
+        //    se puede consultar públicamente.
         if (!string.IsNullOrWhiteSpace(request.Website))
         {
-            return ServiceResult<SolicitudCreatedResponse>.Success(
-                BuildResponse(SolicitudNumberGenerator.Format(0, DateTime.UtcNow.Year), kwhDia));
+            var folioSenuelo = SolicitudNumberGenerator.Format(
+                Random.Shared.Next(100, 9999), DateTime.UtcNow.Year);
+            return ServiceResult<SolicitudCreatedResponse>.Success(BuildResponse(folioSenuelo, kwhDia));
         }
 
         var solicitud = new SolicitudCliente
