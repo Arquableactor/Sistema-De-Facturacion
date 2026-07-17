@@ -12,10 +12,10 @@ public record ApplianceResponse(
 // Respuesta al enviar la solicitud. Devuelve el folio (para que el prospecto pueda
 // referenciarlo) y el estimado CALCULADO POR EL SERVER, que es la verdad: el front
 // muestra este número, no el suyo.
-// CostoElectricoEstimadoMensual es DERIVADO (kWh/mes × tarifa) y NO se guarda: la
-// tarifa cambia, así que congelarla sería guardar una mentira futura.
+// SOLO consumo (kWh): la captación no muestra un costo en RD$. La tarifa dominicana es
+// escalonada y varía por distribuidora, y prometer un número en pesos aquí sería
+// inexacto; el costo real lo calcula APE en la visita técnica.
 public record SolicitudCreatedResponse(
     string NumeroSolicitud,
     decimal ConsumoEstimadoKwhDia,
-    decimal ConsumoEstimadoKwhMes,
-    decimal CostoElectricoEstimadoMensual);
+    decimal ConsumoEstimadoKwhMes);

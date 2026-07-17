@@ -7,11 +7,6 @@ public class CaptacionOptions
 {
     public const string SectionName = "Captacion";
 
-    // RD$ por kWh para el costo eléctrico ESTIMADO que ve el prospecto.
-    // Es orientativo: la tarifa real es escalonada y depende de la distribuidora.
-    // TODO: si el negocio lo pide, modelar los bloques de tarifa en vez de un promedio.
-    public decimal TarifaKwh { get; set; } = 12.5m;
-
     // Anti-abuso: el POST es el primer endpoint anónimo que ESCRIBE.
     public int SolicitudesPorHora { get; set; } = 5;
     public int ConsultasPorMinuto { get; set; } = 60;

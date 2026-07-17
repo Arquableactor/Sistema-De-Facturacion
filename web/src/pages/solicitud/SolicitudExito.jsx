@@ -32,7 +32,6 @@ export default function SolicitudExito({ resultado, onVolver }) {
         className="mt-5 text-left"
         kwhDia={resultado.consumoEstimadoKwhDia}
         kwhMes={resultado.consumoEstimadoKwhMes}
-        costoMensual={resultado.costoElectricoEstimadoMensual}
       />
 
       <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/80">

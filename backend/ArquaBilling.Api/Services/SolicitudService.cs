@@ -5,7 +5,6 @@ using ArquaBilling.Api.Entities;
 using ArquaBilling.Api.Helpers;
 using ArquaBilling.Api.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 
 namespace ArquaBilling.Api.Services;
 
@@ -14,12 +13,10 @@ public class SolicitudService : ISolicitudService
     private const int DiasDelMes = 30; // mes comercial: el estimado es orientativo
 
     private readonly AppDbContext _db;
-    private readonly CaptacionOptions _options;
 
-    public SolicitudService(AppDbContext db, IOptions<CaptacionOptions> options)
+    public SolicitudService(AppDbContext db)
     {
         _db = db;
-        _options = options.Value;
     }
 
     public async Task<IReadOnlyList<ApplianceResponse>> GetAppliancesAsync()
@@ -107,13 +104,9 @@ public class SolicitudService : ISolicitudService
             BuildResponse(solicitud.NumeroSolicitud, kwhDia));
     }
 
-    private SolicitudCreatedResponse BuildResponse(string numero, decimal kwhDia)
-    {
-        var kwhMes = Round(kwhDia * DiasDelMes);
-        // Costo DERIVADO, no guardado: la tarifa cambia y es configurable.
-        var costo = Round(kwhMes * _options.TarifaKwh);
-        return new SolicitudCreatedResponse(numero, kwhDia, kwhMes, costo);
-    }
+    // Solo consumo (kWh). Sin costo en RD$: ver SolicitudCreatedResponse.
+    private static SolicitudCreatedResponse BuildResponse(string numero, decimal kwhDia)
+        => new(numero, kwhDia, Round(kwhDia * DiasDelMes));
 
     private static decimal Round(decimal value) => Math.Round(value, 2, MidpointRounding.AwayFromZero);
 

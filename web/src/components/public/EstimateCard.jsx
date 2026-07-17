@@ -1,11 +1,9 @@
-import { money } from '../../lib/format.js'
-
 // El estimado de consumo, con el número grande como protagonista.
 // Se rotula SIEMPRE como estimado: este formulario CAPTA, no dimensiona — el cálculo
 // real lo hace APE en la visita técnica, y la UI no debe insinuar más precisión de la
-// que tiene. El costo en RD$ sale de una tarifa promedio configurable, así que se
-// presenta como acompañante, nunca como el dato principal.
-export default function EstimateCard({ kwhDia, kwhMes, costoMensual, className = '' }) {
+// que tiene. SOLO consumo en kWh: nunca un costo en RD$. La tarifa dominicana es
+// escalonada y variable, así que prometer un número en pesos aquí sería inexacto.
+export default function EstimateCard({ kwhDia, kwhMes, className = '' }) {
   return (
     <div className={`relative overflow-hidden rounded-card bg-brand-dark p-5 shadow-card ${className}`}>
       <div
@@ -29,11 +27,6 @@ export default function EstimateCard({ kwhDia, kwhMes, costoMensual, className =
           <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold tabular text-white/80">
             {kwhDia.toLocaleString('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh / día
           </span>
-          {costoMensual != null && (
-            <span className="rounded-full border border-amber/40 bg-amber/10 px-2.5 py-1 text-xs font-semibold text-amber">
-              Costo eléctrico estimado {money(costoMensual)}
-            </span>
-          )}
         </div>
       </div>
     </div>
