@@ -9,6 +9,8 @@ import {
   IconEquipment,
   IconWarranty,
   IconClients,
+  IconInbox,
+  IconCatalog,
   IconUsers,
   IconLogout,
   IconChevron,
@@ -21,7 +23,10 @@ const NAV = [
   { to: '/equipos', label: 'Equipos', Icon: IconEquipment },
   { to: '/garantias', label: 'Garantías', Icon: IconWarranty },
   { to: '/clientes', label: 'Clientes', Icon: IconClients },
-  // Solo-Admin: se filtra abajo según el permiso.
+  // Captación (Admin + Facturación) — junto a Clientes, que es a lo que llevan.
+  { to: '/solicitudes', label: 'Solicitudes', Icon: IconInbox, action: 'solicitudes.manage' },
+  // Los solo-Admin se filtran abajo según el permiso.
+  { to: '/catalogo', label: 'Catálogo', Icon: IconCatalog, action: 'catalogo.manage' },
   { to: '/usuarios', label: 'Usuarios', Icon: IconUsers, action: 'users.manage' },
 ]
 

@@ -14,6 +14,8 @@ export const PERMISSIONS = {
   'payments.void': ['Admin'], // anular pago: solo Admin
   'warranties.generate': ['Admin', 'Technician'], // generar garantía (no Facturación)
   'users.manage': ['Admin'], // gestión de usuarios
+  'solicitudes.manage': ['Admin', 'Sales'], // bandeja de captación (no Técnico)
+  'catalogo.manage': ['Admin'], // CRUD del catálogo de electrodomésticos
 }
 
 // ¿Puede `role` ejecutar `action`? Acción no listada => permitida.

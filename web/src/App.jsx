@@ -17,6 +17,8 @@ import InvoiceFormPage from './pages/invoices/InvoiceFormPage.jsx'
 import InvoiceDetailPage from './pages/InvoiceDetailPage.jsx'
 import GarantiasPage from './pages/GarantiasPage.jsx'
 import UsersPage from './pages/UsersPage.jsx'
+import SolicitudesPage from './pages/SolicitudesPage.jsx'
+import CatalogoPage from './pages/CatalogoPage.jsx'
 import PublicVerifyPage from './pages/PublicVerifyPage.jsx'
 import SolicitudPage from './pages/SolicitudPage.jsx'
 
@@ -48,7 +50,24 @@ export default function App() {
               <Route path="equipos" element={<ProductsPage />} />
               <Route path="garantias" element={<GarantiasPage />} />
               <Route path="clientes" element={<ClientsPage />} />
+              {/* Captación interna: Admin + Facturación. */}
+              <Route
+                path="solicitudes"
+                element={
+                  <RequireRole action="solicitudes.manage">
+                    <SolicitudesPage />
+                  </RequireRole>
+                }
+              />
               {/* Solo-Admin: la guarda redirige al panel si el rol no puede. */}
+              <Route
+                path="catalogo"
+                element={
+                  <RequireRole action="catalogo.manage">
+                    <CatalogoPage />
+                  </RequireRole>
+                }
+              />
               <Route
                 path="usuarios"
                 element={
