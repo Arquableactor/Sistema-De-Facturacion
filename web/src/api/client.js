@@ -84,19 +84,40 @@ export const api = {
 // verificación de garantía). Devuelve JSON o lanza ApiError con .status (404 se
 // distingue del error de red, que llega con status 0).
 export async function getPublic(path) {
+  return publicRequest('GET', path)
+}
+
+// POST PÚBLICO: mismas reglas que getPublic (sin Bearer, sin redirect 401) para los
+// endpoints anónimos que ESCRIBEN, como la solicitud de captación. Conserva `details`
+// para que el formulario pueda pintar el error en su campo, y distingue el 429 del
+// rate limit del error de red (status 0).
+export async function postPublic(path, body) {
+  return publicRequest('POST', path, body)
+}
+
+async function publicRequest(method, path, body) {
   let res
   try {
-    res = await fetch(path, { headers: { Accept: 'application/json' } })
+    res = await fetch(path, {
+      method,
+      headers: {
+        Accept: 'application/json',
+        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+      },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    })
   } catch {
     throw new ApiError('No se pudo conectar con el servidor.', 0)
   }
+
+  if (res.status === 204) return null
 
   const isJson = (res.headers.get('content-type') || '').includes('application/json')
   const payload = isJson ? await res.json().catch(() => null) : null
 
   if (!res.ok) {
     const message = (isJson && payload && payload.message) || 'Ocurrió un error inesperado.'
-    throw new ApiError(message, res.status)
+    throw new ApiError(message, res.status, isJson ? payload?.details : null)
   }
   return payload
 }

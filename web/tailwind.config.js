@@ -16,7 +16,7 @@ export default {
       colors: {
         // brand DEFAULT/dark son FIJOS: el sidebar y el overlay del modal son navy en
         // ambos temas. Solo el texto de marca cambia con el tema.
-        brand: { DEFAULT: '#0E3358', dark: '#0B2440', text: themed('brand-text') },
+        brand: { DEFAULT: '#0E3358', dark: '#0B2440', text: themed('brand-text'), soft: themed('brand-soft') },
 
         // `primary` = acento (texto, bordes, rellenos). `primary-solid` = fondo de botón
         // con texto blanco. Van separados porque en oscuro el acento se aclara para leerse

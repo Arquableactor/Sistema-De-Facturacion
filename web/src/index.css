@@ -44,6 +44,9 @@
     --c-orange-strong: 154 74 36; /* #9A4A24 - texto sobre orange-soft */
     --c-orange-soft: 252 238 232; /* #FCEEE8 */
 
+    /* Fondo suave de la marca (categoría "Iluminación" de la captación). */
+    --c-brand-soft: 231 238 246; /* #E7EEF6 */
+
     /* Velo del modal: navy de marca en claro (idéntico al bg-brand/40 original). */
     --c-scrim: 14 51 88; /* #0E3358 */
 
@@ -91,6 +94,8 @@
     --c-orange: 240 138 99; /* #F08A63 */
     --c-orange-strong: 252 184 154; /* #FCB89A - texto sobre orange-soft */
     --c-orange-soft: 58 33 23; /* #3A2117 */
+
+    --c-brand-soft: 26 38 58; /* #1A263A */
 
     /* En oscuro el velo debe OSCURECER: el navy de marca sobre un fondo ya oscuro lo
        aclaraba y el panel quedaba sin separarse del fondo. */

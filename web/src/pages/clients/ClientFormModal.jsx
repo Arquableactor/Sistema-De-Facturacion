@@ -4,42 +4,18 @@ import Button from '../../components/ui/Button.jsx'
 import Field from '../../components/ui/Field.jsx'
 import { createClient, updateClient } from '../../api/clientsApi.js'
 import { mapDetails } from '../../lib/apiErrors.js'
-
-// Reglas de documento por tipo — ESPEJO de ClientDocumentRules en el backend.
-// Cédula y RNC son numéricos puros; el pasaporte es alfanumérico de 6 a 15.
-const DOC_TYPES = [
-  { value: 'Cedula', label: 'Cédula', digits: 11 },
-  { value: 'Rnc', label: 'RNC', digits: 9 },
-  { value: 'Passport', label: 'Pasaporte' },
-]
-const DOC_META = Object.fromEntries(DOC_TYPES.map((d) => [d.value, d]))
-const PASSPORT_MAX = 15
-const PHONE_DIGITS = 10
-
-const onlyDigits = (v) => String(v ?? '').replace(/\D/g, '')
-const onlyAlnum = (v) => String(v ?? '').replace(/[^A-Za-z0-9]/g, '')
-
-// LIMPIAR ≠ RECORTAR, y la diferencia importa:
-//  - limpiar (quitar guiones/espacios/letras según el tipo) NO pierde información;
-//  - recortar al largo del tipo SÍ la pierde.
-// Por eso solo recortamos mientras el usuario TECLEA (ve el tope en vivo). Al CARGAR
-// un valor guardado nunca recortamos: si la fila vieja trae 12 dígitos, se muestran los
-// 12 y la validación lo marca. Recortarlos daría un número distinto y "válido" que se
-// guardaría en silencio, justo el tipo de bug que esta sesión vino a eliminar.
-function cleanDocument(value, type) {
-  const meta = DOC_META[type]
-  if (!meta) return String(value ?? '').trim()
-  return meta.digits ? onlyDigits(value) : onlyAlnum(value)
-}
-
-function clampDocument(value, type) {
-  const meta = DOC_META[type]
-  if (!meta) return value
-  return value.slice(0, meta.digits ?? PASSPORT_MAX)
-}
-
-const cleanPhone = onlyDigits
-const clampPhone = (value) => value.slice(0, PHONE_DIGITS)
+import {
+  DOC_TYPES,
+  DOC_META,
+  PHONE_DIGITS,
+  cleanDocument,
+  clampDocument,
+  cleanPhone,
+  clampPhone,
+  validateDocument,
+  validatePhone,
+  validateEmail,
+} from '../../lib/documentRules.js'
 
 const EMPTY = {
   name: '',
@@ -55,33 +31,17 @@ const EMPTY = {
   installationAddress: '',
 }
 
-function validateDocument(f) {
-  if (!f.documentNumber.trim()) return 'El documento es obligatorio.'
-  const meta = DOC_META[f.documentType]
-  if (!meta) return undefined // sin tipo elegido ya se reporta en documentType
-  if (meta.digits) {
-    if (!/^\d+$/.test(f.documentNumber) || f.documentNumber.length !== meta.digits) {
-      return `${meta.label} debe tener exactamente ${meta.digits} dígitos, sin letras ni guiones.`
-    }
-    return undefined
-  }
-  if (!/^[A-Za-z0-9]{6,15}$/.test(f.documentNumber)) {
-    return 'El pasaporte debe ser alfanumérico de 6 a 15 caracteres.'
-  }
-  return undefined
-}
-
 function validate(f) {
   const e = {}
   if (!f.name.trim()) e.name = 'El nombre es obligatorio.'
   if (!f.documentType) e.documentType = 'Selecciona el tipo de documento.'
-  const doc = validateDocument(f)
+  const doc = validateDocument(f.documentNumber, f.documentType)
   if (doc) e.documentNumber = doc
-  if (!f.phone.trim()) e.phone = 'El teléfono es obligatorio.'
-  else if (!/^\d{10}$/.test(f.phone)) e.phone = 'El teléfono debe tener exactamente 10 dígitos.'
+  const phone = validatePhone(f.phone)
+  if (phone) e.phone = phone
   if (!f.installationAddress.trim()) e.installationAddress = 'La dirección es obligatoria.'
-  if (f.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim()))
-    e.email = 'Correo electrónico inválido.'
+  const email = validateEmail(f.email)
+  if (email) e.email = email
   return e
 }
 

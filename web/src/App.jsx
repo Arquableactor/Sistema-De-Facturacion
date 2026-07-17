@@ -18,6 +18,7 @@ import InvoiceDetailPage from './pages/InvoiceDetailPage.jsx'
 import GarantiasPage from './pages/GarantiasPage.jsx'
 import UsersPage from './pages/UsersPage.jsx'
 import PublicVerifyPage from './pages/PublicVerifyPage.jsx'
+import SolicitudPage from './pages/SolicitudPage.jsx'
 
 export default function App() {
   return (
@@ -30,6 +31,8 @@ export default function App() {
           {/* Públicas (sin login) */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/verificar/:code" element={<PublicVerifyPage />} />
+          {/* Captación: el link que APE comparte por WhatsApp. */}
+          <Route path="/solicitud" element={<SolicitudPage />} />
 
           {/* Protegidas: requieren token */}
           <Route element={<ProtectedRoute />}>
