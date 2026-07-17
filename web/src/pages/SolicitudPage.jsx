@@ -192,7 +192,7 @@ export default function SolicitudPage() {
   }
 
   return (
-    <PublicShell width="lg">
+    <PublicShell width="wide">
       <PublicHero
         badge="Evaluación 100% gratis"
         title="Solicita tu evaluación solar gratis"
@@ -217,6 +217,8 @@ export default function SolicitudPage() {
           <div className="space-y-4 lg:flex-1">
             {/* ---- 1. Datos ---- */}
             <PublicCard step={1} title="Tus datos" subtitle="Para preparar tu propuesta">
+              {/* Móvil: una columna. Desde sm: pares de campos relacionados en 2
+                  columnas, para que no sea una torre de inputs gigantes. */}
               <div className="space-y-3.5">
                 <PublicField id="nombre" label="Nombre completo" error={errors.nombre}>
                   <input
@@ -228,6 +230,7 @@ export default function SolicitudPage() {
                   />
                 </PublicField>
 
+                <div className="grid gap-3.5 sm:grid-cols-2">
                 <PublicField label="Tipo de documento" error={errors.documentType}>
                   {/* Píldoras en vez de select: 3 opciones, y en móvil se tocan de una. */}
                   <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Tipo de documento">
@@ -271,7 +274,9 @@ export default function SolicitudPage() {
                     className={inputCls(errors.documentNumber)}
                   />
                 </PublicField>
+                </div>
 
+                <div className="grid gap-3.5 sm:grid-cols-2">
                 <PublicField id="phone" label="Teléfono / WhatsApp" error={errors.phone}>
                   <input
                     id="phone"
@@ -293,7 +298,9 @@ export default function SolicitudPage() {
                     className={inputCls(errors.email)}
                   />
                 </PublicField>
+                </div>
 
+                <div className="grid gap-3.5 sm:grid-cols-2">
                 <PublicField id="provincia" label="Provincia" optional error={errors.provincia}>
                   <select
                     id="provincia"
@@ -319,6 +326,7 @@ export default function SolicitudPage() {
                     className={inputCls(errors.ubicacion)}
                   />
                 </PublicField>
+                </div>
               </div>
             </PublicCard>
 
@@ -394,7 +402,11 @@ export default function SolicitudPage() {
                           </span>
                         )}
                       </header>
-                      <div className="space-y-2">
+                      {/* Móvil: lista vertical. Desde sm: 2 columnas. No pasamos de 2
+                          porque cada tarjeta abierta lleva dos steppers con su etiqueta,
+                          y a 3 columnas quedarían apretados. `items-start` evita que una
+                          tarjeta abierta estire a la de al lado. */}
+                      <div className="grid items-start gap-2 sm:grid-cols-2">
                         {items.map((a) => (
                           <EquipoItem
                             key={a.id}
@@ -413,8 +425,11 @@ export default function SolicitudPage() {
             </div>
           </div>
 
-          {/* ---- Estimado + enviar ---- */}
-          <aside className="mt-4 lg:mt-0 lg:w-80 lg:shrink-0 lg:sticky lg:top-6">
+          {/* ---- Estimado + enviar ----
+              Apilado (móvil/tablet) se acota a max-w-md y se centra: a ancho completo,
+              el botón de enviar quedaba de 672px y se veía desproporcionado.
+              Desde lg pasa a ser la columna sticky de la derecha. */}
+          <aside className="mx-auto mt-4 w-full max-w-md lg:sticky lg:top-6 lg:mx-0 lg:mt-0 lg:w-80 lg:max-w-none lg:shrink-0">
             <EstimateCard kwhDia={estimado.kwhDia} kwhMes={estimado.kwhMes} />
 
             {formError && (
