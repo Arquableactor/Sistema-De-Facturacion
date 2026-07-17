@@ -52,6 +52,10 @@ const PROVINCIAS = [
 
 const MAX_FACTURA = 1_000_000
 
+// El botón de la barra fija vive FUERA del <form> (la barra está anclada al viewport),
+// así que lo enlaza por id con el atributo form=.
+const FORM_ID = 'solicitud-form'
+
 export default function SolicitudPage() {
   const { data: appliances, loading, error, reload } = useApi(() => getAppliances(), [])
 
@@ -191,8 +195,54 @@ export default function SolicitudPage() {
     )
   }
 
+  // Botón de envío. Se pinta en dos sitios (la columna lateral en desktop y la barra
+  // fija en móvil), nunca a la vez: uno de los dos está oculto por breakpoint.
+  // En la barra el texto va corto: el largo se comía el ancho del estimado.
+  const botonEnviar = (extraCls = '', label = 'Solicitar mi evaluación gratis') => (
+    <button
+      type="submit"
+      form={FORM_ID}
+      disabled={submitting}
+      className={`flex items-center justify-center gap-2 whitespace-nowrap rounded-btn bg-amber px-4 py-3.5 font-display font-bold text-brand-dark transition-colors hover:bg-amber/90 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 ${extraCls}`}
+    >
+      {submitting ? (
+        <>
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand-dark/30 border-t-brand-dark" />
+          Enviando…
+        </>
+      ) : (
+        <>
+          {label}
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+        </>
+      )}
+    </button>
+  )
+
+  // Barra fija de móvil: sin ella, el "estimado en vivo" obliga a bajar 24 equipos para
+  // verlo cambiar, que es justo la gracia del formulario.
+  const barraMovil = !loading && !error && (
+    <div className="flex items-center gap-3">
+      <div className="min-w-0 flex-1">
+        <div className="whitespace-nowrap text-[9px] font-bold uppercase tracking-wide text-amber">
+          Tu consumo
+        </div>
+        <div className="flex items-baseline gap-1.5 whitespace-nowrap">
+          <span className="font-display text-2xl font-bold leading-none tabular text-white">
+            {estimado.kwhMes.toLocaleString('es-DO', { maximumFractionDigits: 0 })}
+          </span>
+          <span className="text-[11px] font-semibold text-white/60">kWh/mes</span>
+        </div>
+      </div>
+      {botonEnviar('shrink-0 px-3.5 py-3 text-sm', 'Solicitar')}
+    </div>
+  )
+
   return (
-    <PublicShell width="wide">
+    <PublicShell width="wide" stickyBar={barraMovil}>
       <PublicHero
         badge="Evaluación 100% gratis"
         title="Solicita tu evaluación solar gratis"
@@ -213,7 +263,12 @@ export default function SolicitudPage() {
           </Button>
         </div>
       ) : (
-        <form onSubmit={onSubmit} noValidate className="mt-4 lg:flex lg:items-start lg:gap-5">
+        <form
+          id={FORM_ID}
+          onSubmit={onSubmit}
+          noValidate
+          className="mt-4 lg:flex lg:items-start lg:gap-5"
+        >
           <div className="space-y-4 lg:flex-1">
             {/* ---- 1. Datos ---- */}
             <PublicCard step={1} title="Tus datos" subtitle="Para preparar tu propuesta">
@@ -453,26 +508,8 @@ export default function SolicitudPage() {
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-btn bg-amber px-4 py-3.5 font-display font-bold text-brand-dark transition-colors hover:bg-amber/90 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-            >
-              {submitting ? (
-                <>
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand-dark/30 border-t-brand-dark" />
-                  Enviando…
-                </>
-              ) : (
-                <>
-                  Solicitar mi evaluación gratis
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M5 12h14M13 6l6 6-6 6" />
-                  </svg>
-                </>
-              )}
-            </button>
+            {/* En móvil este botón sobra: el de la barra fija hace lo mismo. */}
+            {botonEnviar('mt-3 hidden w-full lg:flex')}
 
             <ul className="mt-3 space-y-1.5">
               {['Evaluación 100% gratis, sin compromiso', 'Tus datos están protegidos',

@@ -16,7 +16,10 @@ const WIDTHS = {
   wide: 'max-w-md sm:max-w-2xl lg:max-w-5xl',
 }
 
-export default function PublicShell({ children, width = 'md', footer }) {
+// `stickyBar`: contenido que se ancla al fondo SOLO en móvil/tablet. En desktop no hace
+// falta porque ahí ya hay una columna lateral sticky. Vive en la cáscara y no en la
+// página porque es un patrón de la cara pública (la landing querrá su CTA fija igual).
+export default function PublicShell({ children, width = 'md', footer, stickyBar }) {
   const max = WIDTHS[width] ?? WIDTHS.md
 
   return (
@@ -26,14 +29,31 @@ export default function PublicShell({ children, width = 'md', footer }) {
         <ThemeToggle variant="onBrand" />
       </div>
 
-      {/* pt-14 deja sitio al toggle: con menos, se montaba encima del hero. */}
-      <div className={`mx-auto w-full ${max} px-4 pb-10 pt-14 sm:pt-16`}>
+      {/* pt-14 deja sitio al toggle: con menos, se montaba encima del hero.
+          El pb extra evita que la barra fija tape el final del contenido. */}
+      <div
+        className={`mx-auto w-full ${max} px-4 pt-14 sm:pt-16 ${
+          stickyBar ? 'pb-32 lg:pb-10' : 'pb-10'
+        }`}
+      >
         {children}
 
         <p className="mt-6 text-center text-xs text-white/55">
           {footer ?? 'APE Multiservicios SRL · Energía Solar'}
         </p>
       </div>
+
+      {stickyBar && (
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-brand-dark/95 backdrop-blur lg:hidden">
+          {/* pb con safe-area: en iPhone la barra de gestos se comería el botón. */}
+          <div
+            className="mx-auto max-w-md px-4 pt-3"
+            style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
+          >
+            {stickyBar}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
