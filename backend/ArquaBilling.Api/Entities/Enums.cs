@@ -59,6 +59,15 @@ public enum ProjectStage
     Finalizado
 }
 
+// Estado de una solicitud pública de captación. Nace Pendiente; la aprobación/rechazo
+// (que crea el Client) es la bandeja interna, fuera de esta sesión.
+public enum SolicitudEstado
+{
+    Pendiente,
+    Aprobada,
+    Rechazada
+}
+
 // Categoría del equipo en el catálogo de productos.
 public enum EquipmentCategory
 {

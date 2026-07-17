@@ -23,6 +23,11 @@ public class AppDbContext : DbContext
     public DbSet<NcfSequence> NcfSequences => Set<NcfSequence>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
+    // Captación pública (prospectos que llenan el formulario compartido por WhatsApp).
+    public DbSet<ElectrodomesticoCatalogo> ElectrodomesticosCatalogo => Set<ElectrodomesticoCatalogo>();
+    public DbSet<SolicitudCliente> SolicitudesClientes => Set<SolicitudCliente>();
+    public DbSet<SolicitudEquipo> SolicitudEquipos => Set<SolicitudEquipo>();
+
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         // Dinero y cantidades: todo decimal usa precisión (18, 2). Nunca float/double.
@@ -37,6 +42,7 @@ public class AppDbContext : DbContext
         configurationBuilder.Properties<WarrantyItemStatus>().HaveConversion<string>().HaveMaxLength(20);
         configurationBuilder.Properties<ProjectStage>().HaveConversion<string>().HaveMaxLength(20);
         configurationBuilder.Properties<EquipmentCategory>().HaveConversion<string>().HaveMaxLength(20);
+        configurationBuilder.Properties<SolicitudEstado>().HaveConversion<string>().HaveMaxLength(20);
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -230,6 +236,65 @@ public class AppDbContext : DbContext
             e.Property(a => a.Action).HasMaxLength(100);
             e.Property(a => a.Entity).HasMaxLength(100);
             // Details queda sin límite (texto largo).
+        });
+
+        // ----- ElectrodomesticoCatalogo (captación pública) -----
+        modelBuilder.Entity<ElectrodomesticoCatalogo>(e =>
+        {
+            e.Property(x => x.Nombre).HasMaxLength(100);
+            e.Property(x => x.Categoria).HasMaxLength(50);
+            // Un nombre no se repite en el catálogo: hace el seed idempotente por nombre.
+            e.HasIndex(x => x.Nombre).IsUnique();
+        });
+
+        // ----- SolicitudCliente -----
+        modelBuilder.Entity<SolicitudCliente>(e =>
+        {
+            e.Property(x => x.NumeroSolicitud).HasMaxLength(30);
+            e.Property(x => x.Nombre).HasMaxLength(200);
+            e.Property(x => x.DocumentNumber).HasMaxLength(30);
+            e.Property(x => x.Phone).HasMaxLength(30);
+            e.Property(x => x.Email).HasMaxLength(256);
+            e.Property(x => x.Provincia).HasMaxLength(50);
+            e.Property(x => x.Ubicacion).HasMaxLength(300);
+            e.Property(x => x.MotivoRechazo).HasMaxLength(500);
+            e.Property(x => x.Notas).HasMaxLength(1000);
+
+            e.HasIndex(x => x.NumeroSolicitud).IsUnique();
+            // La bandeja de revisión (sesión 2) lista "pendientes, más recientes primero".
+            e.HasIndex(x => new { x.Estado, x.CreatedAt });
+
+            // El documento NO es único a propósito: un prospecto puede solicitar varias
+            // veces y quien revisa decide. La deduplicación es humana, no de esquema.
+
+            // Restrict: el Client nacido de una solicitud no se borra dejándola colgada.
+            e.HasOne(x => x.ClienteCreado)
+                .WithMany()
+                .HasForeignKey(x => x.ClienteCreadoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(x => x.RevisadoPor)
+                .WithMany()
+                .HasForeignKey(x => x.RevisadoPorUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ----- SolicitudEquipo -----
+        modelBuilder.Entity<SolicitudEquipo>(e =>
+        {
+            e.Property(x => x.NombreEquipo).HasMaxLength(100);
+
+            // Si se borra la solicitud, se van sus equipos (no existen sin ella).
+            e.HasOne(x => x.Solicitud)
+                .WithMany(s => s.Equipos)
+                .HasForeignKey(x => x.SolicitudId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Restrict: no borrar del catálogo algo que ya explica un estimado enviado.
+            e.HasOne(x => x.Electrodomestico)
+                .WithMany(c => c.SolicitudEquipos)
+                .HasForeignKey(x => x.ElectrodomesticoId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

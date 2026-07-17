@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using ArquaBilling.Api.DTOs.Shared;
 using ArquaBilling.Api.Entities;
 
 namespace ArquaBilling.Api.DTOs.Clients;
@@ -16,9 +17,9 @@ public class ClientUpdateRequest : IValidatableObject
     [Required, MaxLength(30)]
     public string DocumentNumber { get; set; } = string.Empty;
 
-    // Teléfono RD sin código de país: exactamente 10 dígitos, sin guiones ni espacios.
+    // La regla del teléfono vive en PhoneRdAttribute (compartida con la captación pública).
     [Required]
-    [RegularExpression(@"^\d{10}$", ErrorMessage = "El teléfono debe tener exactamente 10 dígitos.")]
+    [PhoneRd]
     [MaxLength(30)]
     public string Phone { get; set; } = string.Empty;
 
@@ -32,5 +33,5 @@ public class ClientUpdateRequest : IValidatableObject
     public bool IsActive { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-        => ClientDocumentRules.Validate(DocumentType, DocumentNumber);
+        => DocumentRules.Validate(DocumentType, DocumentNumber);
 }

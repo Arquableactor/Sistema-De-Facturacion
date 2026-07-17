@@ -2,17 +2,22 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 using ArquaBilling.Api.Entities;
 
-namespace ArquaBilling.Api.DTOs.Clients;
+namespace ArquaBilling.Api.DTOs.Shared;
 
-// Formato del documento SEGÚN EL TIPO (RD). Compartido por create y update para no
-// duplicar la regla: cédula y RNC son numéricos puros; el pasaporte es alfanumérico.
-// El error se reporta sobre DocumentNumber para que el front lo pinte en ese campo.
-public static class ClientDocumentRules
+// Formato del documento SEGÚN EL TIPO (RD): cédula y RNC son numéricos puros; el
+// pasaporte es alfanumérico. El error se reporta sobre "DocumentNumber" para que el
+// front lo pinte en ese campo.
+//
+// COMPARTIDO por Client (create/update) y por la solicitud pública de captación: una
+// solicitud aprobada se convierte en Client, así que si aquí aceptáramos lo que Client
+// rechaza, la aprobación reventaría. Una sola regla, un solo lugar.
+public static class DocumentRules
 {
     public const int CedulaDigits = 11;
     public const int RncDigits = 9;
 
-    private static readonly string[] DocumentNumberMember = { nameof(ClientCreateRequest.DocumentNumber) };
+    // Todas las DTOs que la usan llaman "DocumentNumber" a su propiedad.
+    private static readonly string[] DocumentNumberMember = { "DocumentNumber" };
 
     private static readonly Regex PassportPattern =
         new("^[A-Za-z0-9]{6,15}$", RegexOptions.Compiled);

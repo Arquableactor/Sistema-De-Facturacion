@@ -90,6 +90,12 @@ builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IWarrantyService, WarrantyService>();
 builder.Services.AddScoped<IPdfService, PdfService>();
+builder.Services.AddScoped<ISolicitudService, SolicitudService>();
+
+// Captación pública: tarifa del estimado y límites anti-abuso (appsettings).
+builder.Services.Configure<CaptacionOptions>(
+    builder.Configuration.GetSection(CaptacionOptions.SectionName));
+builder.Services.AddPublicRateLimiting();
 
 // QuestPDF: licencia Community (gratuita, válida para este caso). Debe fijarse al inicio.
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
@@ -146,6 +152,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Antes de autenticar: al ser endpoints anónimos, el límite debe frenar al abusador
+// lo más temprano posible (y así un 400 de validación también consume su cuota).
+app.UseRateLimiter();
 
 // El orden importa: autenticar primero, autorizar después.
 app.UseAuthentication();

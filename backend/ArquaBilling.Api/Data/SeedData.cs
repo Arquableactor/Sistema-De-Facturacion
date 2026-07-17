@@ -6,9 +6,78 @@ namespace ArquaBilling.Api.Data;
 
 public static class SeedData
 {
-    // Datos iniciales. Idempotente: si ya hay usuarios, no hace nada.
+    // Datos iniciales. Cada bloque comprueba SU propia precondición, no una global:
+    // el catálogo de electrodomésticos llegó después que los usuarios, así que un
+    // guard único ("si ya hay usuarios, no hagas nada") lo habría dejado sin sembrar
+    // para siempre en cualquier base existente.
     // El PasswordHasher viene de DI (mismo que usa AuthService para verificar).
     public static async Task SeedAsync(AppDbContext db, PasswordHasher<User> hasher)
+    {
+        await SeedElectrodomesticosAsync(db);
+        await SeedNegocioAsync(db, hasher);
+    }
+
+    // ----- Bloque 1: catálogo de electrodomésticos (captación pública) -----
+    private static async Task SeedElectrodomesticosAsync(AppDbContext db)
+    {
+        if (await db.ElectrodomesticosCatalogo.AnyAsync())
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        // Vatios y horas típicas de un hogar dominicano. VARIANTES GRUESAS a propósito
+        // (12k/18k/24k BTU, nevera grande/pequeña): esto capta, no dimensiona.
+        // Las horas son el valor SUGERIDO que precarga el formulario.
+        var items = new (string Nombre, int Watts, decimal Horas, string Categoria)[]
+        {
+            // Climatización
+            ("Aire acondicionado 12k BTU", 1100, 8m, "Climatización"),
+            ("Aire acondicionado 18k BTU", 1600, 8m, "Climatización"),
+            ("Aire acondicionado 24k BTU", 2200, 8m, "Climatización"),
+            ("Abanico de techo", 60, 10m, "Climatización"),
+            ("Abanico de pie", 55, 8m, "Climatización"),
+            // Cocina
+            ("Nevera grande", 120, 24m, "Cocina"),
+            ("Nevera pequeña", 80, 24m, "Cocina"),
+            ("Microondas", 1200, 0.5m, "Cocina"),
+            ("Estufa eléctrica", 2000, 1m, "Cocina"),
+            ("Freidora de aire", 1500, 0.5m, "Cocina"),
+            ("Licuadora", 400, 0.5m, "Cocina"),
+            // Agua
+            ("Bomba de agua", 750, 1.5m, "Agua"),
+            ("Calentador de agua", 1500, 1m, "Agua"),
+            ("Dispensador / enfriador", 100, 10m, "Agua"),
+            // Entretenimiento
+            ("Televisor", 100, 6m, "Entretenimiento"),
+            ("Consola de videojuegos", 150, 2m, "Entretenimiento"),
+            ("Equipo de sonido", 80, 2m, "Entretenimiento"),
+            ("Computadora / laptop", 100, 4m, "Entretenimiento"),
+            ("Router / internet", 12, 24m, "Entretenimiento"),
+            // Lavado
+            ("Lavadora", 500, 1m, "Lavado"),
+            ("Secadora de ropa", 3000, 0.5m, "Lavado"),
+            ("Plancha", 1200, 0.5m, "Lavado"),
+            // Iluminación
+            ("Bombillos LED", 10, 5m, "Iluminación"),
+            ("Bombillos incandescentes", 60, 5m, "Iluminación"),
+        };
+
+        db.ElectrodomesticosCatalogo.AddRange(items.Select(i => new ElectrodomesticoCatalogo
+        {
+            Nombre = i.Nombre,
+            WattsTipicos = i.Watts,
+            HorasPorDiaSugeridas = i.Horas,
+            Categoria = i.Categoria,
+            IsActive = true,
+            CreatedAt = now
+        }));
+
+        await db.SaveChangesAsync();
+    }
+
+    // ----- Bloque 2: usuarios, catálogo de productos, clientes y proyectos demo -----
+    private static async Task SeedNegocioAsync(AppDbContext db, PasswordHasher<User> hasher)
     {
         if (await db.Users.AnyAsync())
         {
