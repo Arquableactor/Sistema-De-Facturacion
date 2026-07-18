@@ -1,3 +1,4 @@
+import { isValidElement } from 'react'
 import ThemeToggle from '../ui/ThemeToggle.jsx'
 
 // Cáscara de las páginas PÚBLICAS de APE (sin login, sin sidebar): la solicitud de
@@ -14,33 +15,46 @@ import ThemeToggle from '../ui/ThemeToggle.jsx'
 const WIDTHS = {
   md: 'max-w-md',
   wide: 'max-w-md sm:max-w-2xl lg:max-w-5xl',
+  landing: 'max-w-md sm:max-w-3xl lg:max-w-6xl',
 }
 
 // `stickyBar`: contenido que se ancla al fondo SOLO en móvil/tablet. En desktop no hace
 // falta porque ahí ya hay una columna lateral sticky. Vive en la cáscara y no en la
 // página porque es un patrón de la cara pública (la landing querrá su CTA fija igual).
-export default function PublicShell({ children, width = 'md', footer, stickyBar }) {
+//
+// `topBar`: barra superior propia de la página (la landing). Cuando viene, ella incluye
+// su toggle, así que ocultamos el flotante y quitamos el padding que le reservaba sitio.
+//
+// `footer`: string (pie por defecto), un NODO (pie propio de la landing) o `null` para
+// no pintar ninguno. Sin pasar nada, sale el pie de siempre.
+export default function PublicShell({ children, width = 'md', footer, stickyBar, topBar }) {
   const max = WIDTHS[width] ?? WIDTHS.md
 
   return (
     <div className="relative min-h-screen bg-brand-gradient">
-      {/* Fuera del layout interno no hay sidebar, así que el toggle vive aquí. */}
-      <div className="absolute right-3 top-3 z-10">
-        <ThemeToggle variant="onBrand" />
-      </div>
+      {topBar ?? (
+        // Sin barra propia: el toggle flota arriba a la derecha (formulario/certificado).
+        <div className="absolute right-3 top-3 z-10">
+          <ThemeToggle variant="onBrand" />
+        </div>
+      )}
 
-      {/* pt-14 deja sitio al toggle: con menos, se montaba encima del hero.
+      {/* pt-14 deja sitio al toggle flotante; con topBar propia no hace falta.
           El pb extra evita que la barra fija tape el final del contenido. */}
       <div
-        className={`mx-auto w-full ${max} px-4 pt-14 sm:pt-16 ${
+        className={`mx-auto w-full ${max} px-4 ${topBar ? 'pt-6' : 'pt-14 sm:pt-16'} ${
           stickyBar ? 'pb-32 lg:pb-10' : 'pb-10'
         }`}
       >
         {children}
 
-        <p className="mt-6 text-center text-xs text-white/55">
-          {footer ?? 'APE Multiservicios SRL · Energía Solar'}
-        </p>
+        {footer === null ? null : isValidElement(footer) ? (
+          footer
+        ) : (
+          <p className="mt-6 text-center text-xs text-white/55">
+            {footer ?? 'APE Multiservicios SRL · Energía Solar'}
+          </p>
+        )}
       </div>
 
       {stickyBar && (

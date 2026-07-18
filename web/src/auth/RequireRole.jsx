@@ -6,6 +6,8 @@ import { useAuth } from './AuthContext.jsx'
 // fallaría con 403. El backend igual protege sus endpoints.
 export default function RequireRole({ action, children }) {
   const { can } = useAuth()
-  if (!can(action)) return <Navigate to="/" replace />
+  // /panel (no "/"): quien está autenticado y sin permiso vuelve a su panel interno,
+  // no a la landing pública de marketing.
+  if (!can(action)) return <Navigate to="/panel" replace />
   return children
 }

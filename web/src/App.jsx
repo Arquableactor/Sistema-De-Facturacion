@@ -1,7 +1,8 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { AuthProvider } from './auth/AuthContext.jsx'
+import { AuthProvider, useAuth } from './auth/AuthContext.jsx'
 import ProtectedRoute from './auth/ProtectedRoute.jsx'
 import RequireRole from './auth/RequireRole.jsx'
+import LandingPage from './pages/LandingPage.jsx'
 import { ThemeProvider } from './theme/ThemeContext.jsx'
 import { ToastProvider } from './components/ui/Toast.jsx'
 import AppLayout from './components/layout/AppLayout.jsx'
@@ -22,6 +23,12 @@ import CatalogoPage from './pages/CatalogoPage.jsx'
 import PublicVerifyPage from './pages/PublicVerifyPage.jsx'
 import SolicitudPage from './pages/SolicitudPage.jsx'
 
+// Redirección de URL desconocida según haya sesión o no.
+function CatchAllRedirect() {
+  const { isAuthenticated } = useAuth()
+  return <Navigate to={isAuthenticated ? '/panel' : '/'} replace />
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -31,6 +38,7 @@ export default function App() {
         <ToastProvider>
           <Routes>
           {/* Públicas (sin login) */}
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/verificar/:code" element={<PublicVerifyPage />} />
           {/* Captación: el link que APE comparte por WhatsApp. */}
@@ -39,7 +47,8 @@ export default function App() {
           {/* Protegidas: requieren token */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
-              <Route index element={<DashboardPage />} />
+              {/* El panel dejó de ser "/" (ahora es la landing pública). */}
+              <Route path="panel" element={<DashboardPage />} />
               <Route path="proyectos" element={<ProjectsPage />} />
               <Route path="proyectos/:id" element={<ProjectDetailPage />} />
               <Route path="facturacion" element={<InvoicesPage />} />
@@ -79,8 +88,10 @@ export default function App() {
             </Route>
           </Route>
 
-            {/* Cualquier otra ruta -> al panel (o /login si no hay sesión) */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* URL desconocida: un empleado logueado vuelve a su panel; un visitante,
+                a la landing. (Si no hay token, /panel rebotaría a /login vía ProtectedRoute,
+                así que lo mandamos directo a la landing.) */}
+            <Route path="*" element={<CatchAllRedirect />} />
           </Routes>
         </ToastProvider>
         </AuthProvider>

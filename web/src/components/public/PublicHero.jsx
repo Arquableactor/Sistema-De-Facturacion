@@ -3,7 +3,8 @@ import BrandMark from '../ui/BrandMark.jsx'
 // Hero público de APE: el sol ámbar sobre navy, la marca y una promesa corta.
 // ESTA es la pieza que la landing reusará tal cual — por eso el contenido entra por
 // props y aquí solo vive el lenguaje visual (sol, tipografía, badge).
-export default function PublicHero({ badge, title, subtitle, compact = false }) {
+// `actions`: ranura opcional para los CTA (la usa la landing; el formulario no la pasa).
+export default function PublicHero({ badge, title, subtitle, actions, compact = false }) {
   return (
     <div
       className={`relative overflow-hidden rounded-card bg-brand-dark shadow-card ${
@@ -52,6 +53,7 @@ export default function PublicHero({ badge, title, subtitle, compact = false }) 
             {subtitle}
           </p>
         )}
+        {actions && <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">{actions}</div>}
       </div>
     </div>
   )

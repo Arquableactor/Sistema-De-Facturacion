@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext.jsx'
 import BrandMark from '../ui/BrandMark.jsx'
 import ThemeToggle from '../ui/ThemeToggle.jsx'
@@ -17,7 +17,7 @@ import {
 } from '../ui/icons.jsx'
 
 const NAV = [
-  { to: '/', label: 'Panel general', Icon: IconDashboard, end: true },
+  { to: '/panel', label: 'Panel general', Icon: IconDashboard, end: true },
   { to: '/proyectos', label: 'Proyectos', Icon: IconProjects },
   { to: '/facturacion', label: 'Facturación', Icon: IconBilling },
   { to: '/equipos', label: 'Equipos', Icon: IconEquipment },
@@ -32,7 +32,15 @@ const NAV = [
 
 export default function Sidebar({ collapsed, onToggle }) {
   const { user, logout, can } = useAuth()
+  const navigate = useNavigate()
   const nav = NAV.filter((item) => !item.action || can(item.action))
+
+  // Al cerrar sesión mandamos a la landing pública (no al login): es la puerta de
+  // entrada del sitio y un destino más amable tras salir.
+  function handleLogout() {
+    logout()
+    navigate('/', { replace: true })
+  }
 
   return (
     <aside
@@ -98,7 +106,7 @@ export default function Sidebar({ collapsed, onToggle }) {
           <div className="space-y-1">
             <ThemeToggle variant="onBrand" compact />
             <button
-              onClick={logout}
+              onClick={handleLogout}
               title="Cerrar sesión"
               className="grid h-10 w-full place-items-center rounded-btn text-white/70 hover:bg-white/10 hover:text-white"
             >
@@ -119,7 +127,7 @@ export default function Sidebar({ collapsed, onToggle }) {
               <ThemeToggle variant="onBrand" compact className="!h-8 !w-8 shrink-0" />
             </div>
             <button
-              onClick={logout}
+              onClick={handleLogout}
               className="flex w-full items-center justify-center gap-2 rounded-btn bg-white/10 py-2 text-sm font-medium text-white hover:bg-white/15"
             >
               <IconLogout width={16} height={16} />

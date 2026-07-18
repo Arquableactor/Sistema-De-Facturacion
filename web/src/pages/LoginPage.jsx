@@ -9,7 +9,9 @@ export default function LoginPage() {
   const { login, isAuthenticated, loading } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = location.state?.from?.pathname || '/'
+  // Destino tras login: el panel interno (ya no "/", que ahora es la landing pública);
+  // si el usuario fue redirigido aquí desde una ruta protegida, respeta ese destino.
+  const from = location.state?.from?.pathname || '/panel'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
