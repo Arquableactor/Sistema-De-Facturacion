@@ -28,7 +28,9 @@
     --c-green-soft: 231 246 238; /* #E7F6EE */
 
     --c-amber: 245 166 35; /* #F5A623 */
-    --c-amber-strong: 154 101 16; /* #9A6510 */
+    --c-amber-strong: 138 90 14; /* #8A5A0E — texto ámbar; oscurecido desde #9A6510 para
+                                    cruzar ≥4.5:1 sobre el fondo claro (appbg) y el pill
+                                    ámbar de la cara pública. Sigue leyéndose ámbar. */
     --c-amber-soft: 254 244 226; /* #FEF4E2 */
 
     --c-danger: 229 72 77; /* #E5484D */

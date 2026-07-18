@@ -68,7 +68,7 @@ function TopBar() {
 // ---------------------------------------------------------------------------
 function Hero() {
   return (
-    <div className="mt-6">
+    <div className="mt-3 sm:mt-4">
       <PublicHero
         badge="Evaluación gratis, sin compromiso"
         title="Genera tu propia energía y reduce tu factura de luz"
@@ -163,16 +163,19 @@ const BENEFICIOS = [
 ]
 
 function PorQueSolar() {
+  // A propósito SIN tarjetas: contenido directo sobre el fondo, separado por espaciado y
+  // no por caja, para romper la pila de cajas y dar ritmo. Acento VERDE (ahorro/energía
+  // limpia), distinto del ámbar de Servicios: el color se usa con intención, no de adorno.
   return (
     <Section eyebrow="Por qué solar" titulo="El sol trabaja para ti">
       <div className="grid grid-cols-1 gap-x-6 gap-y-7 sm:grid-cols-2 lg:grid-cols-4">
         {BENEFICIOS.map(({ Icon, titulo, texto }) => (
           <div key={titulo}>
-            <span className="grid h-11 w-11 place-items-center rounded-xl bg-white/10 text-amber">
+            <span className="grid h-11 w-11 place-items-center rounded-xl bg-green-soft text-green-strong">
               <Icon />
             </span>
-            <h3 className="mt-4 font-display text-base font-semibold text-white">{titulo}</h3>
-            <p className="mt-1.5 text-sm leading-relaxed text-white/70">{texto}</p>
+            <h3 className="mt-4 font-display text-base font-semibold text-brand-text">{titulo}</h3>
+            <p className="mt-1.5 text-sm leading-relaxed text-muted">{texto}</p>
           </div>
         ))}
       </div>
@@ -266,19 +269,34 @@ function GarantiaVerificable() {
 // CTA final
 // ---------------------------------------------------------------------------
 function CtaFinal() {
+  // Banda navy deliberada (ancla de marca, blanca sobre navy en ambos temas): el clímax
+  // de la página. Un sol propio en SVG + resplandor ámbar la separan de una caja genérica.
   return (
-    <div className="mt-14 rounded-card bg-brand-dark p-8 text-center shadow-card sm:mt-20 sm:p-12">
-      <h2 className="mx-auto max-w-xl font-display text-2xl font-bold text-white sm:text-3xl">
-        ¿Listo para que el sol pague tu factura?
-      </h2>
-      <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-white/70">
-        Solicita tu evaluación gratis hoy. Sin compromiso: un asesor de APE revisará tus datos y
-        te contactará.
-      </p>
-      <Link to="/solicitud" className={`${ctaPrimary} mt-6`}>
-        Quiero ser cliente
-        <ArrowIcon />
-      </Link>
+    <div className="relative mt-16 overflow-hidden rounded-card bg-brand-gradient p-8 text-center shadow-card ring-1 ring-inset ring-white/10 sm:mt-24 sm:p-14">
+      {/* Resplandor solar, decorativo. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 top-0 h-48 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber opacity-20 blur-3xl"
+      />
+      <div className="relative">
+        <span
+          aria-hidden="true"
+          className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-full bg-amber/15 text-amber ring-1 ring-amber/30"
+        >
+          <SunGlyph />
+        </span>
+        <h2 className="mx-auto max-w-xl font-display text-2xl font-bold text-white sm:text-3xl">
+          ¿Listo para que el sol pague tu factura?
+        </h2>
+        <p className="mx-auto mt-2.5 max-w-lg text-sm leading-relaxed text-white/70 sm:text-base">
+          Solicita tu evaluación gratis hoy. Sin compromiso: un asesor de APE revisará tus datos y
+          te contactará.
+        </p>
+        <Link to="/solicitud" className={`${ctaPrimary} mt-7`}>
+          Quiero ser cliente
+          <ArrowIcon />
+        </Link>
+      </div>
     </div>
   )
 }
@@ -288,28 +306,30 @@ function CtaFinal() {
 // ---------------------------------------------------------------------------
 function Footer() {
   const year = new Date().getFullYear()
+  // Vive directo sobre el fondo de página → todo en tokens de tema (brand-text/muted/edge),
+  // nada de white, o desaparecería en claro. El acento "Contacto" usa amber-strong.
   return (
-    <footer id="contacto" className="mt-14 border-t border-white/10 pt-8 sm:mt-20">
+    <footer id="contacto" className="mt-16 border-t border-edge pt-8 sm:mt-24">
       <div className="grid gap-8 sm:grid-cols-2">
         <div>
           <div className="flex items-center gap-2.5">
             <BrandMark size={32} />
             <div className="leading-tight">
-              <div className="font-display text-sm font-semibold text-white">APE Multiservicios SRL</div>
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-white/55">
+              <div className="font-display text-sm font-semibold text-brand-text">APE Multiservicios SRL</div>
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">
                 Energía solar · Rep. Dominicana
               </div>
             </div>
           </div>
-          <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/70">
+          <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted">
             Instalación, mantenimiento y garantía de sistemas de energía solar para hogares y
             negocios.
           </p>
         </div>
 
         <div className="sm:justify-self-end">
-          <div className="text-[11px] font-bold uppercase tracking-wide text-amber">Contacto</div>
-          <ul className="mt-3 space-y-2 text-sm text-white/75">
+          <div className="text-[11px] font-bold uppercase tracking-wide text-amber-strong">Contacto</div>
+          <ul className="mt-3 space-y-2 text-sm text-muted">
             <li className="flex items-center gap-2">
               <PhoneIcon /> {CONTACTO.telefono}
             </li>
@@ -326,7 +346,7 @@ function Footer() {
         </div>
       </div>
 
-      <div className="mt-8 flex flex-col gap-1 border-t border-white/10 pt-5 text-xs text-white/60 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-8 flex flex-col gap-1 border-t border-edge pt-5 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
         <span>© {year} APE Multiservicios SRL. Todos los derechos reservados.</span>
         <span>RNC {CONTACTO.rnc}</span>
       </div>
@@ -342,13 +362,18 @@ const ctaPrimary =
 const ctaSecondary =
   'inline-flex items-center justify-center gap-2 rounded-btn border border-white/25 px-5 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40'
 
-// Sección: eyebrow ámbar + título blanco sobre navy, y el contenido debajo.
+// Sección: eyebrow ámbar + título en tokens de tema, y el contenido debajo.
+// - eyebrow con `amber-strong` (no `amber`): el ámbar puro no contrasta sobre el fondo
+//   claro; el strong es marrón-ámbar en claro y ámbar claro en oscuro, legible en ambos.
+// - título con `brand-text` (no white): ahora vive sobre el fondo de página, no navy.
+// - jerarquía: xl→2xl, un paso POR DEBAJO del hero (2xl→4xl), para que el hero domine.
+// - ritmo: escala vertical consistente entre secciones, con más aire en desktop.
 function Section({ id, eyebrow, titulo, children }) {
   return (
-    <section id={id} className="mt-14 scroll-mt-20 sm:mt-20">
-      <div className="mb-6">
-        <div className="text-xs font-bold uppercase tracking-wide text-amber">{eyebrow}</div>
-        <h2 className="mt-1 max-w-2xl font-display text-2xl font-bold text-white sm:text-3xl">
+    <section id={id} className="mt-16 scroll-mt-20 sm:mt-24">
+      <div className="mb-6 sm:mb-8">
+        <div className="text-xs font-bold uppercase tracking-wide text-amber-strong">{eyebrow}</div>
+        <h2 className="mt-1.5 max-w-2xl font-display text-xl font-bold text-brand-text sm:text-2xl">
           {titulo}
         </h2>
       </div>
@@ -377,6 +402,15 @@ function CheckIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" {...stroke} strokeWidth={2.8}>
       <path d="M20 6 9 17l-5-5" />
+    </svg>
+  )
+}
+// Sol propio (disco + rayos) para el CTA final. Decorativo, aria-hidden.
+function SunGlyph() {
+  return (
+    <svg width="26" height="26" viewBox="0 0 24 24" {...stroke} strokeWidth={1.9}>
+      <circle cx="12" cy="12" r="4.5" />
+      <path d="M12 1.5v2.5M12 20v2.5M3.2 3.2l1.8 1.8M19 19l1.8 1.8M1.5 12h2.5M20 12h2.5M3.2 20.8l1.8-1.8M19 5l1.8-1.8" />
     </svg>
   )
 }
@@ -446,21 +480,21 @@ function IconValue() {
 }
 function PhoneIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" {...stroke} className="shrink-0 text-white/50">
+    <svg width="15" height="15" viewBox="0 0 24 24" {...stroke} className="shrink-0 text-faint">
       <path d="M5 4h3l1.5 4-2 1.5a12 12 0 0 0 5 5l1.5-2 4 1.5V17a2 2 0 0 1-2 2A15 15 0 0 1 3 6a2 2 0 0 1 2-2z" />
     </svg>
   )
 }
 function WhatsappIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="shrink-0 text-white/50">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="shrink-0 text-faint">
       <path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm0 18a8 8 0 0 1-4-1.1l-.3-.2-3 .8.8-3-.2-.3A8 8 0 1 1 12 20zm4.4-5.9c-.2-.1-1.4-.7-1.6-.8s-.4-.1-.5.1-.6.8-.7 1-.3.2-.5 0a6.5 6.5 0 0 1-3.2-2.8c-.2-.4.2-.4.6-1.2a.5.5 0 0 0 0-.5c0-.1-.5-1.3-.7-1.7s-.4-.4-.5-.4h-.5a1 1 0 0 0-.7.3A2.8 2.8 0 0 0 7 8.8a4.9 4.9 0 0 0 1 2.6 11.2 11.2 0 0 0 4.3 3.8c1.6.7 2.2.7 3 .6a2.5 2.5 0 0 0 1.7-1.2 2 2 0 0 0 .1-1.2c-.1-.1-.3-.2-.5-.3z" />
     </svg>
   )
 }
 function MailIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" {...stroke} className="shrink-0 text-white/50">
+    <svg width="15" height="15" viewBox="0 0 24 24" {...stroke} className="shrink-0 text-faint">
       <rect x="3" y="5" width="18" height="14" rx="2" />
       <path d="m3 7 9 6 9-6" />
     </svg>
@@ -468,7 +502,7 @@ function MailIcon() {
 }
 function PinIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" {...stroke} className="shrink-0 text-white/50">
+    <svg width="15" height="15" viewBox="0 0 24 24" {...stroke} className="shrink-0 text-faint">
       <path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z" />
       <circle cx="12" cy="10" r="2.5" />
     </svg>

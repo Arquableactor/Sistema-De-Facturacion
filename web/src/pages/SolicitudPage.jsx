@@ -428,10 +428,12 @@ export default function SolicitudPage() {
                   2
                 </span>
                 <div>
-                  <h2 className="font-display text-base font-semibold text-white">
+                  {/* Encabezado directo sobre la cáscara (no en tarjeta): tokens de tema,
+                      no white, o se volvería invisible cuando el fondo se aclara. */}
+                  <h2 className="font-display text-base font-semibold text-brand-text">
                     ¿Qué equipos usas en casa?
                   </h2>
-                  <p className="mt-0.5 text-xs text-white/60">
+                  <p className="mt-0.5 text-xs text-muted">
                     Marca los que tienes y ajusta cantidad y horas.
                   </p>
                 </div>
@@ -514,8 +516,8 @@ export default function SolicitudPage() {
             <ul className="mt-3 space-y-1.5">
               {['Evaluación 100% gratis, sin compromiso', 'Tus datos están protegidos',
                 'Te contactamos en menos de 24 horas'].map((t) => (
-                <li key={t} className="flex items-center gap-2 text-xs text-white/65">
-                  <span className="text-green">
+                <li key={t} className="flex items-center gap-2 text-xs text-muted">
+                  <span className="text-green-strong">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                       strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M20 6 9 17l-5-5" />
@@ -544,12 +546,14 @@ function inputCls(error) {
 function PublicField({ id, label, optional, error, children }) {
   return (
     <div data-error={error ? 'true' : undefined}>
+      {/* Micro-label del registro público. `muted` (no `faint`): faint queda en ~3:1 sobre
+          blanco y no cumple ≥4.5. muted se lee igual de discreto pero es accesible. */}
       <label
         htmlFor={id}
-        className="mb-1.5 block text-[10px] font-bold uppercase tracking-wide text-faint"
+        className="mb-1.5 block text-[10px] font-bold uppercase tracking-wide text-muted"
       >
         {label}
-        {optional && <span className="ml-1 font-semibold text-faint-2">· Opcional</span>}
+        {optional && <span className="ml-1 font-semibold text-muted">· Opcional</span>}
       </label>
       {children}
       {error && <p className="mt-1 text-xs font-medium text-danger-strong">{error}</p>}

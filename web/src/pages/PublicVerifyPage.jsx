@@ -16,16 +16,21 @@ export default function PublicVerifyPage() {
   const { data, loading, error, reload } = useApi(() => verifyPublic(code), [code])
 
   return (
-    <div className="relative grid min-h-screen place-items-center bg-brand-gradient px-4 py-10">
-      {/* Esta página va fuera del layout (no hay sidebar), así que el toggle vive aquí. */}
+    // Fondo de página consciente del tema (claro de verdad en claro). El certificado va
+    // en una tarjeta bg-surface, que es la pieza protagonista; el resto es texto en tokens.
+    // flex (no grid place-items-center): con place-items-center la columna se dimensiona al
+    // CONTENIDO, y la tabla de series forzaba la tarjeta a ~382px y desbordaba a 375px.
+    <div className="relative flex min-h-screen items-center justify-center bg-appbg px-4 py-10">
+      {/* Esta página va fuera del layout (no hay sidebar), así que el toggle vive aquí.
+          variant por defecto: flota sobre el fondo de página, no sobre navy. */}
       <div className="absolute right-4 top-4">
-        <ThemeToggle variant="onBrand" />
+        <ThemeToggle />
       </div>
       <div className="w-full max-w-md">
         <div className="mb-5 flex flex-col items-center text-center">
           <BrandMark size={52} />
-          <h1 className="mt-3 font-display text-lg font-semibold text-white">APE Multiservicios</h1>
-          <p className="text-sm text-white/60">Verificación de certificado de garantía</p>
+          <h1 className="mt-3 font-display text-lg font-semibold text-brand-text">APE Multiservicios</h1>
+          <p className="text-sm text-muted">Verificación de certificado de garantía</p>
         </div>
 
         <div className="rounded-card bg-surface p-6 shadow-card">
@@ -53,7 +58,7 @@ export default function PublicVerifyPage() {
           ) : null}
         </div>
 
-        <p className="mt-4 text-center text-xs text-white/40">
+        <p className="mt-4 text-center text-xs text-muted">
           Verificación oficial de APE Multiservicios SRL
         </p>
       </div>
@@ -98,7 +103,7 @@ function Certificate({ data }) {
       </div>
 
       <div className="mt-4">
-        <div className="mb-2 text-xs font-medium uppercase tracking-wide text-faint">
+        <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">
           Equipos cubiertos
         </div>
         <div className="overflow-x-auto rounded-btn border border-edge">

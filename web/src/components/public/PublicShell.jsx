@@ -5,9 +5,15 @@ import ThemeToggle from '../ui/ThemeToggle.jsx'
 // captación hoy, la landing después. Registro "marketing": más aire y branding
 // prominente, al contrario de la app interna, que es densa.
 //
-// Fija el lienzo (fondo navy de marca, ancho de lectura, footer y el toggle de tema)
-// para que cada página pública solo escriba su contenido y todas se sientan la misma
-// familia. Móvil-primero: el link se comparte por WhatsApp.
+// Fija el lienzo (fondo de página, ancho de lectura, footer y el toggle de tema) para
+// que cada página pública solo escriba su contenido y todas se sientan la misma familia.
+// Móvil-primero: el link se comparte por WhatsApp.
+//
+// TEMA REAL: el FONDO DE PÁGINA es `bg-appbg` y cambia con el tema (claro de verdad en
+// claro, navy casi negro en oscuro). El navy de marca NO es el fondo: vive en las BANDAS
+// deliberadas (el hero de PublicHero, el CTA final, el estimado), que se quedan navy en
+// ambos temas como ancla de marca y se leen como piezas elevadas sobre el fondo. Por eso
+// el texto directo sobre la cáscara usa tokens (text-brand-text/text-muted), no white.
 // Anchos por registro de contenido, móvil-primero:
 //  - 'md'   : contenido corto y centrado (el certificado de /verificar).
 //  - 'wide' : formulario/landing. Crece por tramos en vez de saltar de golpe, para que
@@ -31,11 +37,13 @@ export default function PublicShell({ children, width = 'md', footer, stickyBar,
   const max = WIDTHS[width] ?? WIDTHS.md
 
   return (
-    <div className="relative min-h-screen bg-brand-gradient">
+    <div className="relative min-h-screen bg-appbg">
       {topBar ?? (
         // Sin barra propia: el toggle flota arriba a la derecha (formulario/certificado).
+        // variant por defecto (no onBrand): ahora flota sobre el FONDO DE PÁGINA, no sobre
+        // navy, así que usa tokens de texto conscientes del tema para no desaparecer.
         <div className="absolute right-3 top-3 z-10">
-          <ThemeToggle variant="onBrand" />
+          <ThemeToggle />
         </div>
       )}
 
@@ -51,7 +59,7 @@ export default function PublicShell({ children, width = 'md', footer, stickyBar,
         {footer === null ? null : isValidElement(footer) ? (
           footer
         ) : (
-          <p className="mt-6 text-center text-xs text-white/55">
+          <p className="mt-6 text-center text-xs text-muted">
             {footer ?? 'APE Multiservicios SRL · Energía Solar'}
           </p>
         )}

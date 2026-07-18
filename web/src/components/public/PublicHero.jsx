@@ -4,10 +4,15 @@ import BrandMark from '../ui/BrandMark.jsx'
 // ESTA es la pieza que la landing reusará tal cual — por eso el contenido entra por
 // props y aquí solo vive el lenguaje visual (sol, tipografía, badge).
 // `actions`: ranura opcional para los CTA (la usa la landing; el formulario no la pasa).
+//
+// BANDA DE MARCA: el hero se queda navy en AMBOS temas (ancla de marca), pero ahora el
+// fondo de página cambia con el tema. El degradado (arriba más claro que el fondo) y el
+// ring hairline lo definen como una banda ELEVADA y deliberada, no como "la página es
+// navy" — sobre todo en oscuro, donde el navy y el fondo casi-negro se acercan.
 export default function PublicHero({ badge, title, subtitle, actions, compact = false }) {
   return (
     <div
-      className={`relative overflow-hidden rounded-card bg-brand-dark shadow-card ${
+      className={`relative overflow-hidden rounded-card bg-brand-gradient shadow-card ring-1 ring-inset ring-white/10 ${
         compact ? 'p-5' : 'p-5 sm:p-7 lg:p-10'
       }`}
     >

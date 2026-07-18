@@ -43,7 +43,7 @@ export default function EquipoItem({ appliance, seleccion, accent, onToggle, onC
           <span className="block text-sm font-bold leading-tight text-brand-text">
             {appliance.nombre}
           </span>
-          <span className="mt-0.5 block text-xs font-semibold text-faint">
+          <span className="mt-0.5 block text-xs font-semibold text-muted">
             ~{appliance.watts} W
           </span>
         </span>
