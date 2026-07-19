@@ -51,16 +51,41 @@ public class NcfSequenceService : INcfSequenceService
             return ServiceResult<NcfSequenceResponse>.Validation("La fecha de vencimiento debe ser futura.");
         }
 
-        // No solaparse con otra secuencia ACTIVA del mismo tipo: dos rangos [a..b] y [c..d]
-        // se solapan si a <= d && c <= b. Emitir desde rangos solapados podría repetir un NCF.
-        var activasDelTipo = await _db.NcfSequences.AsNoTracking()
-            .Where(s => s.Type == type && s.IsActive)
-            .Select(s => new { s.StartNumber, s.MaxNumber })
+        // (1) No solaparse con NINGUNA secuencia del mismo tipo, ACTIVA O INACTIVA: dos rangos
+        //     [a..b] y [c..d] se solapan si a <= d && c <= b. Incluimos las inactivas porque una
+        //     desactivada pudo haber emitido NCFs en su rango; pisarla re-emitiría esos números.
+        var mismoTipo = await _db.NcfSequences.AsNoTracking()
+            .Where(s => s.Type == type)
+            .Select(s => new { s.Id, s.StartNumber, s.MaxNumber, s.IsActive })
             .ToListAsync();
-        if (activasDelTipo.Any(s => request.StartNumber <= s.MaxNumber && s.StartNumber <= request.MaxNumber))
+        var solapada = mismoTipo.FirstOrDefault(s =>
+            request.StartNumber <= s.MaxNumber && s.StartNumber <= request.MaxNumber);
+        if (solapada is not null)
         {
             return ServiceResult<NcfSequenceResponse>.Conflict(
-                "El rango se solapa con otra secuencia activa del mismo tipo.");
+                $"El rango {request.StartNumber}–{request.MaxNumber} se solapa con la secuencia {type} " +
+                $"#{solapada.Id} ({solapada.StartNumber}–{solapada.MaxNumber}, " +
+                $"{(solapada.IsActive ? "activa" : "inactiva")}). Ajusta el número inicial o final.");
+        }
+
+        // (2) No incluir números YA EMITIDOS de ese tipo: aunque la secuencia origen se haya
+        //     desactivado o borrado, el NCF sigue en Invoices y el índice único lo rechazaría en
+        //     plena emisión (500). Mejor bloquear aquí con un mensaje claro. Los NCF son
+        //     "{tipo}{n:D8}" (ancho fijo por tipo), así que dentro del mismo prefijo el orden de
+        //     cadena == orden numérico; acotamos por el prefijo, la longitud y el rango [low..high].
+        var low = NcfHelper.Format(type, request.StartNumber);
+        var high = NcfHelper.Format(type, request.MaxNumber);
+        var emitidoEnRango = await _db.Invoices.AsNoTracking()
+            .Where(i => i.NCF != null && i.NCF.StartsWith(type) && i.NCF.Length == type.Length + 8
+                && string.Compare(i.NCF, low) >= 0 && string.Compare(i.NCF, high) <= 0)
+            .OrderBy(i => i.NCF)
+            .Select(i => i.NCF)
+            .FirstOrDefaultAsync();
+        if (emitidoEnRango is not null)
+        {
+            return ServiceResult<NcfSequenceResponse>.Conflict(
+                $"El rango {request.StartNumber}–{request.MaxNumber} incluye el comprobante {emitidoEnRango}, " +
+                "que ya fue emitido en una factura. Elige un rango que no incluya números ya usados.");
         }
 
         var seq = new NcfSequence
