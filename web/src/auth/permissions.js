@@ -16,6 +16,8 @@ export const PERMISSIONS = {
   'users.manage': ['Admin'], // gestión de usuarios
   'solicitudes.manage': ['Admin', 'Sales'], // bandeja de captación (no Técnico)
   'catalogo.manage': ['Admin'], // CRUD del catálogo de electrodomésticos
+  'config.manage': ['Admin'], // Configuración (secuencias NCF): solo Admin administra
+  'ncf.viewStatus': ['Admin', 'Sales'], // ver los avisos de NCF (Facturación los necesita)
 }
 
 // ¿Puede `role` ejecutar `action`? Acción no listada => permitida.

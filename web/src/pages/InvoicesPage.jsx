@@ -13,6 +13,7 @@ import { money, date } from '../lib/format.js'
 import { getInvoices, issueInvoice, downloadInvoicePdf } from '../api/invoicesApi.js'
 import { getProjects } from '../api/projectsApi.js'
 import { statusMeta } from './invoices/invoiceMeta.js'
+import { NcfAlertBanner } from './configuracion/NcfStatus.jsx'
 
 const FILTERS = [
   { value: '', label: 'Todos' },
@@ -86,6 +87,9 @@ export default function InvoicesPage() {
       />
 
       <div className="space-y-4 p-6">
+        {/* Aviso de NCF crítico (Admin + Facturación); solo aparece si es crítico. */}
+        {can('ncf.viewStatus') && <NcfAlertBanner />}
+
         <div className="flex items-center justify-between gap-4">
           <p className="text-sm text-muted">
             {loading ? 'Cargando…' : `${invoices.length} factura${invoices.length === 1 ? '' : 's'}`}

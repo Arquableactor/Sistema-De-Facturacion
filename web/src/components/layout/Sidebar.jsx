@@ -12,6 +12,7 @@ import {
   IconInbox,
   IconCatalog,
   IconUsers,
+  IconSettings,
   IconLogout,
   IconChevron,
 } from '../ui/icons.jsx'
@@ -28,6 +29,7 @@ const NAV = [
   // Los solo-Admin se filtran abajo según el permiso.
   { to: '/catalogo', label: 'Catálogo', Icon: IconCatalog, action: 'catalogo.manage' },
   { to: '/usuarios', label: 'Usuarios', Icon: IconUsers, action: 'users.manage' },
+  { to: '/configuracion', label: 'Configuración', Icon: IconSettings, action: 'config.manage' },
 ]
 
 export default function Sidebar({ collapsed, onToggle }) {

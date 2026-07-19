@@ -20,6 +20,7 @@ import GarantiasPage from './pages/GarantiasPage.jsx'
 import UsersPage from './pages/UsersPage.jsx'
 import SolicitudesPage from './pages/SolicitudesPage.jsx'
 import CatalogoPage from './pages/CatalogoPage.jsx'
+import ConfiguracionPage from './pages/ConfiguracionPage.jsx'
 import PublicVerifyPage from './pages/PublicVerifyPage.jsx'
 import SolicitudPage from './pages/SolicitudPage.jsx'
 
@@ -82,6 +83,15 @@ export default function App() {
                 element={
                   <RequireRole action="users.manage">
                     <UsersPage />
+                  </RequireRole>
+                }
+              />
+              {/* Configuración (secuencias NCF): solo Admin. */}
+              <Route
+                path="configuracion"
+                element={
+                  <RequireRole action="config.manage">
+                    <ConfiguracionPage />
                   </RequireRole>
                 }
               />

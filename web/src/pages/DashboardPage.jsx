@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import Topbar from '../components/layout/Topbar.jsx'
 import Badge from '../components/ui/Badge.jsx'
 import DataState from '../components/data/DataState.jsx'
+import { useAuth } from '../auth/AuthContext.jsx'
 import useApi from '../hooks/useApi.js'
 import { money, date } from '../lib/format.js'
 import { getProjects } from '../api/projectsApi.js'
@@ -10,6 +11,7 @@ import { getInvoices } from '../api/invoicesApi.js'
 import { getWarranties } from '../api/warrantiesApi.js'
 import { stageMeta } from './projects/projectMeta.jsx'
 import { statusMeta } from './invoices/invoiceMeta.js'
+import { NcfStatusCard } from './configuracion/NcfStatus.jsx'
 
 // KPIs calculados en el front sobre las listas completas — válido al volumen actual.
 // TODO: mover a un endpoint de resumen server-side cuando el volumen crezca.
@@ -25,6 +27,8 @@ const BAR_BG = {
 const DAY = 86400000
 
 export default function DashboardPage() {
+  const { can } = useAuth()
+  const canViewNcf = can('ncf.viewStatus')
   const p = useApi(() => getProjects(), [])
   const i = useApi(() => getInvoices(), [])
   const w = useApi(() => getWarranties(), [])
@@ -92,6 +96,9 @@ export default function DashboardPage() {
               />
               <StatCard label="Garantías activas" value={kpis.garantiasActivas} tone="text-green-strong" />
             </div>
+
+            {/* Estado de los comprobantes NCF (Admin + Facturación). */}
+            {canViewNcf && <NcfStatusCard />}
 
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Proyectos por etapa */}
