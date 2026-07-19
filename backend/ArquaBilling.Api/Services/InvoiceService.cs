@@ -182,18 +182,36 @@ public class InvoiceService : IInvoiceService
             return ServiceResult<InvoiceResponse>.Conflict("No se puede emitir una factura sin líneas.");
         }
 
-        // 2) Bloqueo de fila de la secuencia NCF activa (FOR UPDATE): consumo atómico del número.
+        // 2) Bloqueo de fila de la secuencia NCF USABLE (FOR UPDATE): consumo atómico del número.
+        //    MISMO mecanismo que antes (lock de fila + transacción); SOLO cambia el criterio:
+        //    usable = activa, no agotada (CurrentNumber < MaxNumber) y no vencida
+        //    (FechaVencimiento nula o >= hoy). Se elige la que VENCE ANTES (NULLS al final, que
+        //    "no vence"), luego por Id. Así, si APE carga una secuencia nueva mientras la vieja
+        //    tiene números, se termina la vieja y se pasa solo a la nueva, sin intervención.
+        var today = DateTime.UtcNow.Date;
         var sequence = (await _db.NcfSequences
-            .FromSqlRaw("SELECT * FROM \"NcfSequences\" WHERE \"IsActive\" = true ORDER BY \"Id\" LIMIT 1 FOR UPDATE")
+            .FromSqlRaw(
+                "SELECT * FROM \"NcfSequences\" " +
+                "WHERE \"IsActive\" = true " +
+                "AND \"CurrentNumber\" < \"MaxNumber\" " +
+                "AND (\"FechaVencimiento\" IS NULL OR \"FechaVencimiento\" >= {0}) " +
+                "ORDER BY \"FechaVencimiento\" ASC NULLS LAST, \"Id\" ASC " +
+                "LIMIT 1 FOR UPDATE", today)
             .ToListAsync()).FirstOrDefault();
 
         if (sequence is null)
         {
-            return ServiceResult<InvoiceResponse>.Conflict("No hay una secuencia NCF activa.");
-        }
-        if (sequence.CurrentNumber >= sequence.MaxNumber)
-        {
-            return ServiceResult<InvoiceResponse>.Conflict("La secuencia NCF está agotada.");
+            // No hay usable: distinguimos el motivo con una lectura (sin lock; ya no emitimos en
+            // este intento). Si existe una activa con números pero VENCIDA, avisamos que está
+            // vencida y BLOQUEAMOS: un NCF de secuencia vencida no tiene validez fiscal.
+            var hayVencida = await _db.NcfSequences.AsNoTracking().AnyAsync(s =>
+                s.IsActive && s.CurrentNumber < s.MaxNumber &&
+                s.FechaVencimiento != null && s.FechaVencimiento < today);
+            return hayVencida
+                ? ServiceResult<InvoiceResponse>.Conflict(
+                    "La secuencia de NCF está vencida. Solicita una nueva a la DGII y regístrala en Configuración.")
+                : ServiceResult<InvoiceResponse>.Conflict(
+                    "No hay secuencia de NCF disponible. Solicita una nueva a la DGII y regístrala en Configuración.");
         }
 
         // 3) Consumir el número y emitir. Increment + NCF + estado van en la misma transacción:

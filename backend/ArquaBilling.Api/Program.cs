@@ -92,6 +92,7 @@ builder.Services.AddScoped<IWarrantyService, WarrantyService>();
 builder.Services.AddScoped<IPdfService, PdfService>();
 builder.Services.AddScoped<ISolicitudService, SolicitudService>();
 builder.Services.AddScoped<IApplianceService, ApplianceService>();
+builder.Services.AddScoped<INcfSequenceService, NcfSequenceService>();
 
 // Captación pública: tarifa del estimado y límites anti-abuso (appsettings).
 builder.Services.Configure<CaptacionOptions>(

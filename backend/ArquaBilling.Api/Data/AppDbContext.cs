@@ -228,6 +228,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<NcfSequence>(e =>
         {
             e.Property(n => n.Type).HasMaxLength(10);
+            e.Property(n => n.NumeroAutorizacion).HasMaxLength(50);
         });
 
         // ----- AuditLog (sin relaciones; UserId es int? sin FK) -----
