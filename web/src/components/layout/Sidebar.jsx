@@ -47,27 +47,42 @@ export default function Sidebar({ collapsed, onToggle }) {
       className="flex h-screen flex-col bg-brand-gradient text-white/90 transition-[width] duration-200"
       style={{ width: collapsed ? 76 : 248 }}
     >
-      {/* Encabezado: isotipo + nombre + toggle */}
-      <div className="flex items-center gap-3 px-4 py-5">
-        <BrandMark size={collapsed ? 40 : 36} />
-        {!collapsed && (
-          <div className="min-w-0 leading-tight">
-            <div className="truncate font-display text-sm font-semibold text-white">
-              APE Multiservicios
-            </div>
-            <div className="truncate text-xs text-white/55">Energía Solar</div>
-          </div>
-        )}
+      {/* Encabezado de marca = el BOTÓN que alterna el sidebar, en AMBOS estados: un solo
+          gesto aprendible. El chevron dejó de ser un botón aparte (en colapsado se cortaba
+          contra el borde); en expandido es solo una pista visual dentro del botón, y en
+          colapsado no se muestra. Como un logo clickeable no es obvio, va con cursor, hover
+          y foco claros, aria-label/aria-expanded según estado y tooltip con la acción. */}
+      <div className="px-3 py-5">
         <button
+          type="button"
           onClick={onToggle}
-          title={collapsed ? 'Expandir' : 'Colapsar'}
-          className="ml-auto grid h-7 w-7 place-items-center rounded-md text-white/60 hover:bg-white/10 hover:text-white"
+          aria-label={collapsed ? 'Expandir menú' : 'Contraer menú'}
+          aria-expanded={!collapsed}
+          title={collapsed ? 'Expandir menú' : 'Contraer menú'}
+          className={`group flex w-full cursor-pointer items-center gap-3 rounded-btn px-2 py-2 text-left transition-colors hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 ${
+            collapsed ? 'justify-center' : ''
+          }`}
         >
-          <IconChevron
-            width={16}
-            height={16}
-            style={{ transform: collapsed ? 'none' : 'rotate(180deg)' }}
-          />
+          <BrandMark size={collapsed ? 40 : 36} />
+          {!collapsed && (
+            <>
+              <span className="min-w-0 flex-1 leading-tight">
+                <span className="block truncate font-display text-sm font-semibold text-white">
+                  APE Multiservicios
+                </span>
+                <span className="block truncate text-xs text-white/55">Energía Solar</span>
+              </span>
+              {/* Pista visual de que el encabezado contrae; decorativa (el botón ya se
+                  anuncia por aria-label). Apunta a la izquierda = "contraer". */}
+              <IconChevron
+                width={16}
+                height={16}
+                aria-hidden="true"
+                className="shrink-0 text-white/50 transition-colors group-hover:text-white/80"
+                style={{ transform: 'rotate(180deg)' }}
+              />
+            </>
+          )}
         </button>
       </div>
 
@@ -78,6 +93,7 @@ export default function Sidebar({ collapsed, onToggle }) {
             key={to}
             to={to}
             end={end}
+            aria-label={label}
             title={collapsed ? label : undefined}
             className={({ isActive }) =>
               `relative flex items-center gap-3 rounded-btn px-3 py-2.5 text-sm font-medium transition-colors ${
