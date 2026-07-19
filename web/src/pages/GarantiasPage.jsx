@@ -132,7 +132,7 @@ export default function GarantiasPage() {
             <p className="text-sm text-muted">
               {loading ? 'Cargando…' : `${warranties.length} garantía${warranties.length === 1 ? '' : 's'}`}
             </p>
-            <p className="text-xs text-faint">Las garantías se generan desde el proyecto.</p>
+            <p className="text-xs text-muted">Las garantías se generan desde el proyecto.</p>
           </div>
 
           <DataState

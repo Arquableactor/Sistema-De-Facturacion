@@ -13,9 +13,12 @@
     --c-edge: 230 237 244; /* #E6EDF4 */
     --c-edge-soft: 238 242 247; /* #EEF2F7 */
     --c-brand-text: 14 42 71; /* #0E2A47 */
-    --c-muted: 91 113 133; /* #5B7185 */
+    --c-muted: 81 102 122; /* #51667A — subido desde #5B7185: en appbg pasó de 4.50 (AA sin
+                              margen) a ~5.3:1. Sigue siendo secundario (brand-text va a 14.6:1). */
     --c-muted-2: 107 130 153; /* #6B8299 */
-    --c-faint: 131 151 171; /* #8397AB */
+    --c-faint: 97 116 136; /* #617488 — subido desde #8397AB: micro-labels sobre tarjetas
+                              blancas pasan de 3.0 (falla AA) a ~4.8:1. Sigue por debajo de muted
+                              (5.9:1), así que se lee como el tier más tenue, no como secundario. */
     --c-faint-2: 162 179 196; /* #A2B3C4 */
 
     --c-primary: 20 102 216; /* #1466D8 */
@@ -68,7 +71,8 @@
     --c-brand-text: 230 237 247; /* #E6EDF7 - texto principal */
     --c-muted: 155 174 196; /* #9BAEC4 */
     --c-muted-2: 141 161 184; /* #8DA1B8 */
-    --c-faint: 110 130 154; /* #6E829A */
+    --c-faint: 126 146 170; /* #7E92AA — subido desde #6E829A: micro-labels sobre superficie
+                              oscura pasan de 4.0/4.3 a ~5.3:1. Sigue por debajo de muted (7.5:1). */
     --c-faint-2: 93 113 137; /* #5D7189 */
 
     --c-primary: 91 157 255; /* #5B9DFF - acento/texto sobre oscuro */

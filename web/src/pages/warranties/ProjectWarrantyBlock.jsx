@@ -140,7 +140,7 @@ export default function ProjectWarrantyBlock({ projectId, equiposCount }) {
 
             {/* Código de verificación */}
             <div className="rounded-btn bg-edge-soft/60 p-3">
-              <div className="text-xs font-medium uppercase tracking-wide text-faint">
+              <div className="text-xs font-medium uppercase tracking-wide text-muted">
                 Código de verificación
               </div>
               <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
@@ -151,7 +151,7 @@ export default function ProjectWarrantyBlock({ projectId, equiposCount }) {
                   Copiar link de verificación
                 </Button>
               </div>
-              <p className="mt-1 text-xs text-faint">
+              <p className="mt-1 text-xs text-muted">
                 Link público que codifica el QR del certificado.
               </p>
             </div>
