@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Modal from '../../components/ui/Modal.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Field from '../../components/ui/Field.jsx'
+import BarcodeScannerModal from '../../components/scanner/BarcodeScannerModal.jsx'
 import { createProduct, updateProduct } from '../../api/productsApi.js'
 import { monthsToYears, yearsToMonths } from '../../lib/format.js'
 import { mapDetails as mapErrorDetails } from '../../lib/apiErrors.js'
@@ -56,6 +57,7 @@ export default function ProductFormModal({ open, product, onClose, onSaved }) {
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [scannerOpen, setScannerOpen] = useState(false)
 
   useEffect(() => {
     if (!open) return
@@ -79,6 +81,14 @@ export default function ProductFormModal({ open, product, onClose, onSaved }) {
     setErrors({})
     setFormError('')
   }, [open, product])
+
+  // Si el modal de producto se cierra por CUALQUIER vía (Esc, ✕, cancelar, guardar), el
+  // visor de cámara debe cerrarse con él: si no, quedaría huérfano encima con la cámara
+  // encendida (los dos modales escuchan Esc, y al cerrarse el de producto el scanner no se
+  // enteraría). Cerrarlo aquí dispara el cleanup del scanner que apaga la cámara.
+  useEffect(() => {
+    if (!open) setScannerOpen(false)
+  }, [open])
 
   function set(field, value) {
     setForm((f) => ({ ...f, [field]: value }))
@@ -133,6 +143,7 @@ export default function ProductFormModal({ open, product, onClose, onSaved }) {
     }`
 
   return (
+    <>
     <Modal
       open={open}
       onClose={onClose}
@@ -192,13 +203,33 @@ export default function ProductFormModal({ open, product, onClose, onSaved }) {
               ))}
             </select>
           </Field>
-          <Field
-            id="barcode"
-            label="Código de barras (opcional)"
-            value={form.barcode}
-            onChange={(e) => set('barcode', e.target.value)}
-            error={errors.barcode}
-          />
+          {/* Se puede escribir a mano O escanear con la cámara. El input se encoge
+              (flex-1) para dejar sitio al botón; el escaneo solo rellena este campo. */}
+          <Field id="barcode" label="Código de barras (opcional)" error={errors.barcode}>
+            <div className="flex gap-2">
+              <input
+                id="barcode"
+                value={form.barcode}
+                onChange={(e) => set('barcode', e.target.value)}
+                placeholder="Escanéalo o escríbelo"
+                className={`min-w-0 flex-1 rounded-btn border bg-surface px-3.5 py-2.5 text-sm text-brand-text outline-none transition-colors placeholder:text-faint focus:ring-2 ${
+                  errors.barcode
+                    ? 'border-danger focus:border-danger focus:ring-danger/15'
+                    : 'border-edge focus:border-primary focus:ring-primary/15'
+                }`}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setScannerOpen(true)}
+                className="shrink-0 gap-1.5 px-3"
+                title="Escanear con la cámara"
+              >
+                <CameraIcon />
+                <span className="hidden sm:inline">Escanear</span>
+              </Button>
+            </div>
+          </Field>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -275,5 +306,36 @@ export default function ProductFormModal({ open, product, onClose, onSaved }) {
         </label>
       </form>
     </Modal>
+
+    {/* Visor de cámara: al detectar rellena el campo y se cierra (apagando la cámara).
+        Es un modal aparte que se monta sobre el de producto. */}
+    <BarcodeScannerModal
+      open={scannerOpen}
+      onDetected={(code) => {
+        set('barcode', code)
+        setScannerOpen(false)
+      }}
+      onClose={() => setScannerOpen(false)}
+    />
+    </>
+  )
+}
+
+function CameraIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M4 7h3l1.5-2h7L17 7h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z" />
+      <circle cx="12" cy="13" r="3.2" />
+    </svg>
   )
 }
