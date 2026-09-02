@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import PublicShell from '../components/public/PublicShell.jsx'
-import PublicHero from '../components/public/PublicHero.jsx'
 import BrandMark from '../components/ui/BrandMark.jsx'
 import ThemeToggle from '../components/ui/ThemeToggle.jsx'
 import { useAuth } from '../auth/AuthContext.jsx'
@@ -66,25 +65,65 @@ function TopBar() {
 // ---------------------------------------------------------------------------
 // Hero
 // ---------------------------------------------------------------------------
+// Hero PROPIO de la landing. Reusa el lenguaje visual del hero público (banda navy con
+// degradado + ring, sol ámbar, marca) pero es de la landing para poder alinear el H1 y su
+// bajada/CTA al mismo RIEL izquierdo (x=80) que los eyebrows y títulos de sección. Así el
+// grid vertical es consistente: borde de la banda, H1, títulos y tarjetas comparten rail.
+//
+// Por qué no se reusa PublicHero aquí: su padding (p-10) mete el contenido a x=120, y
+// pegarlo con margen negativo desbordaría el viewport en móvil y en desktop < ~1264px. En
+// vez de tocar el PublicHero compartido (lo usan /solicitud y /verificar y NO deben
+// cambiar), la banda va sin padding izquierdo: el contenido arranca en el borde = el riel,
+// con el aire y el sol a la derecha. La barra ámbar da un anclaje visual a ese borde.
 function Hero() {
   return (
-    <div className="mt-3 sm:mt-4">
-      <PublicHero
-        badge="Evaluación gratis, sin compromiso"
-        title="Genera tu propia energía y reduce tu factura de luz"
-        subtitle="Instalamos sistemas de energía solar para hogares y negocios en República Dominicana. Solicita tu evaluación gratis y da el primer paso hacia el ahorro."
-        actions={
-          <>
-            <Link to="/solicitud" className={`${ctaPrimary} w-full sm:w-auto`}>
-              Quiero ser cliente
-              <ArrowIcon />
-            </Link>
-            <a href="#como-funciona" className={`${ctaSecondary} w-full sm:w-auto`}>
-              Cómo funciona
-            </a>
-          </>
-        }
+    <div className="relative mt-3 overflow-hidden rounded-card bg-brand-gradient py-7 pr-6 shadow-card ring-1 ring-inset ring-white/10 sm:mt-4 sm:py-10 sm:pr-9 lg:py-12 lg:pr-12">
+      {/* Sol: resplandor + disco ámbar, la firma visual (decorativo). */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-6 -top-8 h-36 w-36 rounded-full bg-amber opacity-40 blur-2xl lg:h-52 lg:w-52"
       />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute right-3 top-2 h-20 w-20 rounded-full bg-amber opacity-90 lg:right-8 lg:top-6 lg:h-28 lg:w-28"
+      />
+
+      {/* Contenido SIN padding izquierdo: arranca en el borde de la banda = el riel x=80,
+          alineado con los eyebrows y títulos de sección de más abajo. El aire vive a la
+          derecha (pr) y en vertical (py); a la izquierda manda la alineación del grid. */}
+      <div className="relative">
+        <div className="flex items-center gap-2.5">
+          <BrandMark size={36} />
+          <div className="min-w-0 leading-tight">
+            <div className="font-display text-sm font-semibold text-white">APE Multiservicios</div>
+            <div className="truncate text-[10px] font-semibold uppercase tracking-wide text-white/55">
+              Soluciones eléctricas · Energía solar
+            </div>
+          </div>
+        </div>
+
+        <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-amber px-3 py-1.5 text-xs font-extrabold uppercase tracking-wide text-brand-dark">
+          <CheckIcon />
+          Evaluación gratis, sin compromiso
+        </span>
+
+        <h1 className="mt-3 max-w-xl font-display text-2xl font-bold leading-tight text-white sm:text-3xl lg:text-4xl">
+          Genera tu propia energía y reduce tu factura de luz
+        </h1>
+        <p className="mt-2 max-w-lg text-sm leading-relaxed text-white/70 lg:text-base">
+          Instalamos sistemas de energía solar para hogares y negocios en República
+          Dominicana. Solicita tu evaluación gratis y da el primer paso hacia el ahorro.
+        </p>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <Link to="/solicitud" className={`${ctaPrimary} w-full sm:w-auto`}>
+            Quiero ser cliente
+            <ArrowIcon />
+          </Link>
+          <a href="#como-funciona" className={`${ctaSecondary} w-full sm:w-auto`}>
+            Cómo funciona
+          </a>
+        </div>
+      </div>
     </div>
   )
 }
@@ -328,7 +367,10 @@ function Footer() {
         </div>
 
         <div className="sm:justify-self-end">
-          <div className="text-[11px] font-bold uppercase tracking-wide text-amber-strong">Contacto</div>
+          <div className="flex items-center gap-2">
+            <span aria-hidden="true" className="h-3.5 w-1 rounded-full bg-amber" />
+            <span className="text-[11px] font-bold uppercase tracking-wide text-muted">Contacto</span>
+          </div>
           <ul className="mt-3 space-y-2 text-sm text-muted">
             <li className="flex items-center gap-2">
               <PhoneIcon /> {CONTACTO.telefono}
@@ -362,17 +404,20 @@ const ctaPrimary =
 const ctaSecondary =
   'inline-flex items-center justify-center gap-2 rounded-btn border border-white/25 px-5 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40'
 
-// Sección: eyebrow ámbar + título en tokens de tema, y el contenido debajo.
-// - eyebrow con `amber-strong` (no `amber`): el ámbar puro no contrasta sobre el fondo
-//   claro; el strong es marrón-ámbar en claro y ámbar claro en oscuro, legible en ambos.
-// - título con `brand-text` (no white): ahora vive sobre el fondo de página, no navy.
-// - jerarquía: xl→2xl, un paso POR DEBAJO del hero (2xl→4xl), para que el hero domine.
+// Sección: eyebrow (acento ámbar VIVO + texto legible) + título, y el contenido debajo.
+// - eyebrow: se separa el ACENTO del TEXTO. La barrita `bg-amber` (#F5A623 vivo) es
+//   DECORATIVA (no es texto → no necesita contraste) y devuelve el punch de marca que el
+//   ámbar apagado había perdido; el texto va en `muted` (≥4.5:1 en claro y oscuro), legible.
+// - título con `brand-text`; jerarquía xl→2xl, un paso por debajo del hero (2xl→4xl).
 // - ritmo: escala vertical consistente entre secciones, con más aire en desktop.
 function Section({ id, eyebrow, titulo, children }) {
   return (
     <section id={id} className="mt-16 scroll-mt-20 sm:mt-24">
       <div className="mb-6 sm:mb-8">
-        <div className="text-xs font-bold uppercase tracking-wide text-amber-strong">{eyebrow}</div>
+        <div className="flex items-center gap-2">
+          <span aria-hidden="true" className="h-3.5 w-1 rounded-full bg-amber" />
+          <span className="text-xs font-bold uppercase tracking-wide text-muted">{eyebrow}</span>
+        </div>
         <h2 className="mt-1.5 max-w-2xl font-display text-xl font-bold text-brand-text sm:text-2xl">
           {titulo}
         </h2>
