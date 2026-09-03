@@ -2,15 +2,19 @@ import { Link } from 'react-router-dom'
 import PublicShell from '../../components/public/PublicShell.jsx'
 
 // Contenedor de un documento legal PÚBLICO (privacidad, términos). Reusa PublicShell para
-// combinar con la landing. El TEXTO es PLACEHOLDER a propósito: la ESTRUCTURA de secciones
-// es la típica, con relleno EVIDENTE (entre corchetes, describiendo qué va en cada parte) y
-// un banner de advertencia arriba, para que NADIE lo publique creyendo que es válido. El
-// usuario reemplaza el cuerpo con la versión revisada por un abogado.
+// combinar con la landing. El contenido (título, fecha, intro y secciones) llega por props;
+// cada sección numera sola su encabezado y conserva la columna angosta de lectura.
 //
-// Props: titulo (string), intro (string opcional), secciones ([{ heading, body }]).
-export const FECHA_ACTUALIZACION = '{{FECHA_ACTUALIZACIÓN}}'
-
-export default function LegalDoc({ titulo, intro, secciones }) {
+// Props:
+//   titulo    (string)
+//   fecha     (string)            — fecha de última actualización
+//   intro     (string | string[]) — uno o varios párrafos introductorios
+//   secciones ([{ heading, body }]) — body es un array de BLOQUES; cada bloque es:
+//     - string           -> párrafo
+//     - { list: [...] }  -> lista con viñetas
+//     - { lines: [...] } -> grupo de líneas juntas (p. ej. bloque de contacto)
+export default function LegalDoc({ titulo, fecha, intro, secciones }) {
+  const introParrafos = Array.isArray(intro) ? intro : intro ? [intro] : []
   return (
     // width="doc": columna angosta (max-w-2xl) = buen ancho de lectura. footer={null}:
     // el pie de marca de PublicShell sobra aquí (el doc tiene su propio cierre).
@@ -22,22 +26,20 @@ export default function LegalDoc({ titulo, intro, secciones }) {
         <BackArrow /> Volver al inicio
       </Link>
 
-      {/* Banner de advertencia: DELIBERADAMENTE llamativo, para que no se confunda con
-          texto legal válido y nadie lo publique por error. */}
-      <div
-        role="alert"
-        className="mt-4 flex items-start gap-2 rounded-card border border-amber/50 bg-amber-soft px-4 py-3 text-sm font-semibold text-amber-strong"
-      >
-        <span aria-hidden="true">⚠</span>
-        <span>Texto de ejemplo — reemplazar con la versión revisada por un abogado.</span>
-      </div>
-
       <h1 className="mt-6 font-display text-2xl font-bold text-brand-text sm:text-3xl">{titulo}</h1>
       <p className="mt-1.5 text-sm text-muted">
-        Última actualización: <span className="font-medium text-brand-text">{FECHA_ACTUALIZACION}</span>
+        Última actualización: <span className="font-medium text-brand-text">{fecha}</span>
       </p>
 
-      {intro && <p className="mt-5 text-sm leading-relaxed text-muted">{intro}</p>}
+      {introParrafos.length > 0 && (
+        <div className="mt-5 space-y-3">
+          {introParrafos.map((p, i) => (
+            <p key={i} className="text-sm leading-relaxed text-muted">
+              {p}
+            </p>
+          ))}
+        </div>
+      )}
 
       <div className="mt-6 space-y-6">
         {secciones.map((s, i) => (
@@ -45,7 +47,11 @@ export default function LegalDoc({ titulo, intro, secciones }) {
             <h2 className="font-display text-base font-semibold text-brand-text">
               {i + 1}. {s.heading}
             </h2>
-            <p className="mt-1.5 text-sm leading-relaxed text-muted">{s.body}</p>
+            <div className="mt-1.5 space-y-3">
+              {s.body.map((block, j) => (
+                <Bloque key={j} block={block} />
+              ))}
+            </div>
           </section>
         ))}
       </div>
@@ -60,6 +66,32 @@ export default function LegalDoc({ titulo, intro, secciones }) {
       </div>
     </PublicShell>
   )
+}
+
+// Un bloque del cuerpo de una sección: párrafo, lista o grupo de líneas.
+function Bloque({ block }) {
+  if (typeof block === 'string') {
+    return <p className="text-sm leading-relaxed text-muted">{block}</p>
+  }
+  if (block.list) {
+    return (
+      <ul className="list-disc space-y-1 pl-5 text-sm leading-relaxed text-muted">
+        {block.list.map((item, i) => (
+          <li key={i}>{item}</li>
+        ))}
+      </ul>
+    )
+  }
+  if (block.lines) {
+    return (
+      <div className="space-y-1 text-sm leading-relaxed text-muted">
+        {block.lines.map((line, i) => (
+          <div key={i}>{line}</div>
+        ))}
+      </div>
+    )
+  }
+  return null
 }
 
 function BackArrow() {

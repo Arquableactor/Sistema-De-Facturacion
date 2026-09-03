@@ -4,11 +4,11 @@ import BrandMark from '../ui/BrandMark.jsx'
 
 // Aviso de LICENCIA / propiedad para el personal de APE. NO es un "acepta para continuar":
 // los empleados NO aceptan términos para usar la herramienta — esto es solo un aviso de que
-// el software es licenciado. Todo dato específico es PLACEHOLDER para reemplazar por el real.
-const SISTEMA = '{{SISTEMA}}'
-const VERSION = '{{VERSIÓN}}'
-const ANIO = '{{AÑO}}'
-const DESARROLLADOR = '{{DESARROLLADOR}}'
+// el software es licenciado. Único lugar donde aparece el desarrollador (ArquaSolutions).
+const SISTEMA = 'APE Solar'
+const VERSION = '1.0'
+const ANIO = '2026'
+const DESARROLLADOR = 'ArquaSolutions'
 
 export default function AboutModal({ open, onClose }) {
   return (

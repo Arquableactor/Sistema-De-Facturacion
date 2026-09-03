@@ -46,7 +46,7 @@ export default function App() {
           <Route path="/verificar/:code" element={<PublicVerifyPage />} />
           {/* Captación: el link que APE comparte por WhatsApp. */}
           <Route path="/solicitud" element={<SolicitudPage />} />
-          {/* Legales públicas (standalone, como /verificar): texto placeholder. */}
+          {/* Legales públicas (standalone, como /verificar). */}
           <Route path="/privacidad" element={<PrivacidadPage />} />
           <Route path="/terminos" element={<TerminosPage />} />
 

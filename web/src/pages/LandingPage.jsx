@@ -13,8 +13,8 @@ import { useAuth } from '../auth/AuthContext.jsx'
 const CONTACTO = {
   telefono: '{{TELÉFONO_APE}}',
   whatsapp: '{{WHATSAPP}}',
-  email: '{{EMAIL}}',
-  direccion: '{{DIRECCIÓN}}',
+  email: '{{EMAIL_APE}}',
+  direccion: '{{DIRECCIÓN_APE}}',
   rnc: '{{RNC}}',
 }
 
