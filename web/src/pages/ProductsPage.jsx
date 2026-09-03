@@ -75,7 +75,7 @@ export default function ProductsPage() {
         action={canWrite ? <Button onClick={openCreate}>+ Nuevo producto</Button> : null}
       />
 
-      <div className="space-y-4 p-6">
+      <div className="space-y-4 p-4 sm:p-6">
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted">
             {loading ? 'Cargando…' : `${products.length} producto${products.length === 1 ? '' : 's'}`}

@@ -5,7 +5,7 @@ export default function PlaceholderPage({ title, subtitle = 'Módulo en construc
   return (
     <>
       <Topbar title={title} subtitle={subtitle} />
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="grid place-items-center rounded-card border border-dashed border-edge bg-surface py-20 text-center">
           <div>
             <div className="font-display text-base font-semibold text-brand-text">Próximamente</div>

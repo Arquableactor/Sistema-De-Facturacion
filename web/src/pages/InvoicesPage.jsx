@@ -86,7 +86,7 @@ export default function InvoicesPage() {
         }
       />
 
-      <div className="space-y-4 p-6">
+      <div className="space-y-4 p-4 sm:p-6">
         {/* Aviso de NCF crítico (Admin + Facturación); solo aparece si es crítico. */}
         {can('ncf.viewStatus') && <NcfAlertBanner />}
 

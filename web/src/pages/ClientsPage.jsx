@@ -114,7 +114,7 @@ export default function ClientsPage() {
         action={canWrite ? <Button onClick={openCreate}>+ Nuevo cliente</Button> : null}
       />
 
-      <div className="space-y-4 p-6">
+      <div className="space-y-4 p-4 sm:p-6">
         {/* Barra de herramientas: contador + búsqueda + toggle de inactivos */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           {/* role=status: al filtrar, el lector de pantalla anuncia cuántos quedaron

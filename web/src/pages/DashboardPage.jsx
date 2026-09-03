@@ -82,11 +82,13 @@ export default function DashboardPage() {
     <>
       <Topbar title="Panel general" subtitle="Resumen del negocio" />
 
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <DataState loading={loading} error={error} empty={false} onRetry={reloadAll}>
           <div className="space-y-6">
             {/* KPIs */}
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {/* Móvil: 1 columna → los montos largos (RD$ …) tienen ancho completo y no se
+                parten. Desde sm vuelve a 2, y en lg a 4, como estaba. */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard label="Proyectos activos" value={kpis.proyectosActivos} />
               <StatCard label="Cuentas por cobrar" value={money(kpis.cuentasPorCobrar)} />
               <StatCard

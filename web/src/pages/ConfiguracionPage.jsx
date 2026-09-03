@@ -69,7 +69,7 @@ export default function ConfiguracionPage() {
         action={<Button onClick={openCreate}>+ Nueva secuencia</Button>}
       />
 
-      <div className="space-y-4 p-6">
+      <div className="space-y-4 p-4 sm:p-6">
         <p className="text-sm text-muted">
           {loading
             ? 'Cargando…'

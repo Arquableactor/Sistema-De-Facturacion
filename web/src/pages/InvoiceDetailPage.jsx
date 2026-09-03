@@ -108,13 +108,15 @@ export default function InvoiceDetailPage() {
         }
       />
 
-      <div className="space-y-6 p-6">
+      <div className="space-y-6 p-4 sm:p-6">
         <DataState loading={loading} error={error} empty={false} onRetry={reloadInvoice}>
           {invoice && (
             <>
               {/* Cabecera */}
               <div className="rounded-card border border-edge bg-surface p-6 shadow-card">
-                <div className="flex items-start justify-between gap-4">
+                {/* Móvil: número/cabecera arriba y acciones (Emitir/PDF) apiladas debajo, para
+                    que el número no se parta. Desde sm vuelven a la misma fila, como hoy. */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-3">
                       <h1 className="font-display text-2xl font-semibold text-brand-text">

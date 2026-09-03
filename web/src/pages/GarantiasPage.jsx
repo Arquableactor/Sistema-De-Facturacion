@@ -55,7 +55,7 @@ export default function GarantiasPage() {
     <>
       <Topbar title="Garantías" subtitle="Certificados de garantía por proyecto" />
 
-      <div className="space-y-6 p-6">
+      <div className="space-y-6 p-4 sm:p-6">
         {/* Búsqueda por número de serie */}
         <div className="rounded-card border border-edge bg-surface p-5 shadow-card">
           <h2 className="font-display text-sm font-semibold text-brand-text">

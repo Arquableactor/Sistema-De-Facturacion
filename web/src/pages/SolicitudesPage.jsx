@@ -55,7 +55,7 @@ export default function SolicitudesPage() {
     <>
       <Topbar title="Solicitudes" subtitle="Evaluaciones solicitadas desde el formulario público" />
 
-      <div className="space-y-4 p-6">
+      <div className="space-y-4 p-4 sm:p-6">
         {/* Toolbar: contador + filtro de estado + búsqueda */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted">

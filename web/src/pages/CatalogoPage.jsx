@@ -65,7 +65,7 @@ export default function CatalogoPage() {
         action={<Button onClick={openCreate}>+ Nuevo electrodoméstico</Button>}
       />
 
-      <div className="space-y-4 p-6">
+      <div className="space-y-4 p-4 sm:p-6">
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted">
             {loading ? 'Cargando…' : `${items.length} electrodoméstico${items.length === 1 ? '' : 's'}`}

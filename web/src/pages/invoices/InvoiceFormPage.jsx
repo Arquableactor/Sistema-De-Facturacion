@@ -185,7 +185,7 @@ export default function InvoiceFormPage() {
         }
       />
 
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {optionsError ? (
           <div className="grid place-items-center rounded-card border border-edge bg-surface py-16 text-center">
             <div>
