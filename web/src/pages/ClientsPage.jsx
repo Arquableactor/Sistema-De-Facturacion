@@ -4,6 +4,7 @@ import Button from '../components/ui/Button.jsx'
 import Badge from '../components/ui/Badge.jsx'
 import Avatar from '../components/ui/Avatar.jsx'
 import ActionMenu from '../components/ui/ActionMenu.jsx'
+import ListCard from '../components/ui/ListCard.jsx'
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx'
 import DataState from '../components/data/DataState.jsx'
 import { useToast } from '../components/ui/Toast.jsx'
@@ -161,7 +162,55 @@ export default function ClientsPage() {
               : 'No hay clientes aún. Crea el primero con «Nuevo cliente».'
           }
         >
-          <div className="overflow-hidden rounded-card border border-edge bg-surface shadow-card">
+          {/* MÓVIL (< lg): tarjetas apiladas, sin scroll lateral. */}
+          <ul className="space-y-3 lg:hidden">
+            {clients.map((c) => (
+              <li key={c.id}>
+                <ListCard
+                  leading={<Avatar name={c.name} size="md" />}
+                  title={c.name}
+                  badge={
+                    <Badge tone={c.isActive ? 'green' : 'gray'}>
+                      {c.isActive ? 'Activo' : 'Inactivo'}
+                    </Badge>
+                  }
+                  fields={[
+                    {
+                      label: 'Documento',
+                      full: true,
+                      value: (
+                        <>
+                          <span className="text-faint">
+                            {DOC_LABEL[c.documentType] || c.documentType}
+                          </span>{' '}
+                          {c.documentNumber}
+                        </>
+                      ),
+                    },
+                    { label: 'Teléfono', value: formatPhone(c.phone) },
+                  ]}
+                  actions={
+                    canWrite ? (
+                      <ActionMenu
+                        label={`Acciones de ${c.name}`}
+                        items={[
+                          { label: 'Editar', onClick: () => openEdit(c) },
+                          c.isActive && {
+                            label: 'Eliminar',
+                            tone: 'danger',
+                            onClick: () => setToDelete(c),
+                          },
+                        ]}
+                      />
+                    ) : null
+                  }
+                />
+              </li>
+            ))}
+          </ul>
+
+          {/* DESKTOP (>= lg): la tabla se queda EXACTAMENTE como estaba. */}
+          <div className="hidden overflow-hidden rounded-card border border-edge bg-surface shadow-card lg:block">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-edge-soft text-xs uppercase tracking-wide text-muted">

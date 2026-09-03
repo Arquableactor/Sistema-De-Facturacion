@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import Topbar from '../components/layout/Topbar.jsx'
 import Button from '../components/ui/Button.jsx'
 import Badge from '../components/ui/Badge.jsx'
+import ActionMenu from '../components/ui/ActionMenu.jsx'
+import ListCard from '../components/ui/ListCard.jsx'
 import TruncatedText from '../components/ui/TruncatedText.jsx'
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx'
 import DataState from '../components/data/DataState.jsx'
@@ -117,7 +119,45 @@ export default function InvoicesPage() {
           onRetry={reload}
           emptyText="No hay facturas. Crea la primera con «Nueva factura»."
         >
-          <div className="overflow-hidden rounded-card border border-edge bg-surface shadow-card">
+          {/* MÓVIL (< lg): tarjetas apiladas, sin scroll lateral. */}
+          <ul className="space-y-3 lg:hidden">
+            {invoices.map((inv) => {
+              const st = statusMeta(inv.status)
+              return (
+                <li key={inv.id}>
+                  <ListCard
+                    href={`/facturacion/${inv.id}`}
+                    ariaLabel={`Factura ${inv.invoiceNumber}`}
+                    title={inv.invoiceNumber}
+                    badge={
+                      <>
+                        <Badge tone={st.tone}>{st.label}</Badge>
+                        {inv.isOverdue && <Badge tone="red">Vencida</Badge>}
+                      </>
+                    }
+                    fields={[
+                      { label: 'Cliente', value: inv.clientName, full: true },
+                      { label: 'Total', value: <span className="tabular">{money(inv.total)}</span> },
+                      { label: 'Balance', value: <span className="tabular">{money(inv.balance)}</span> },
+                    ]}
+                    actions={
+                      <ActionMenu
+                        label={`Acciones de ${inv.invoiceNumber}`}
+                        items={[
+                          inv.status === 'Draft' &&
+                            canIssue && { label: 'Emitir', onClick: () => setToEmit(inv) },
+                          { label: 'Descargar PDF', onClick: () => onPdf(inv) },
+                        ]}
+                      />
+                    }
+                  />
+                </li>
+              )
+            })}
+          </ul>
+
+          {/* DESKTOP (>= lg): la tabla se queda EXACTAMENTE como estaba. */}
+          <div className="hidden overflow-hidden rounded-card border border-edge bg-surface shadow-card lg:block">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-edge-soft text-xs uppercase tracking-wide text-muted">
