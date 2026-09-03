@@ -2,6 +2,9 @@ import { useState } from 'react'
 import Topbar from '../components/layout/Topbar.jsx'
 import Button from '../components/ui/Button.jsx'
 import Badge from '../components/ui/Badge.jsx'
+import Avatar from '../components/ui/Avatar.jsx'
+import ActionMenu from '../components/ui/ActionMenu.jsx'
+import ListCard from '../components/ui/ListCard.jsx'
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx'
 import DataState from '../components/data/DataState.jsx'
 import { useToast } from '../components/ui/Toast.jsx'
@@ -104,7 +107,40 @@ export default function UsersPage() {
           onRetry={reload}
           emptyText="No hay usuarios que mostrar."
         >
-          <div className="overflow-hidden rounded-card border border-edge bg-surface shadow-card">
+          {/* MÓVIL (< lg): tarjetas. */}
+          <ul className="space-y-3 lg:hidden">
+            {users.map((u) => (
+              <li key={u.id}>
+                <ListCard
+                  leading={<Avatar name={u.fullName} size="md" />}
+                  title={u.fullName}
+                  badge={
+                    <>
+                      <Badge tone={ROLE_TONE[u.role] || 'gray'}>{ROLE_LABELS[u.role] || u.role}</Badge>
+                      <Badge tone={u.isActive ? 'green' : 'gray'}>{u.isActive ? 'Activo' : 'Inactivo'}</Badge>
+                    </>
+                  }
+                  fields={[
+                    { label: 'Correo', value: u.email, full: true },
+                    { label: 'Creado', value: date(u.createdAt) },
+                  ]}
+                  actions={
+                    <ActionMenu
+                      label={`Acciones de ${u.fullName}`}
+                      items={[
+                        { label: 'Editar', onClick: () => openEdit(u) },
+                        { label: 'Restablecer contraseña', onClick: () => setResetting(u) },
+                        u.isActive && { label: 'Desactivar', tone: 'danger', onClick: () => setToDeactivate(u) },
+                      ]}
+                    />
+                  }
+                />
+              </li>
+            ))}
+          </ul>
+
+          {/* DESKTOP (>= lg): tabla idéntica. */}
+          <div className="hidden overflow-hidden rounded-card border border-edge bg-surface shadow-card lg:block">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-edge-soft text-xs uppercase tracking-wide text-muted">

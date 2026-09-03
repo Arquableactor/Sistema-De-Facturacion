@@ -4,6 +4,7 @@ import Topbar from '../components/layout/Topbar.jsx'
 import Button from '../components/ui/Button.jsx'
 import Badge from '../components/ui/Badge.jsx'
 import ActionMenu from '../components/ui/ActionMenu.jsx'
+import ListCard from '../components/ui/ListCard.jsx'
 import TruncatedText from '../components/ui/TruncatedText.jsx'
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx'
 import DataState from '../components/data/DataState.jsx'
@@ -102,7 +103,46 @@ export default function ProjectsPage() {
           onRetry={reload}
           emptyText="No hay proyectos aún. Crea el primero con «Nuevo proyecto»."
         >
-          <div className="overflow-hidden rounded-card border border-edge bg-surface shadow-card">
+          {/* MÓVIL (< lg): tarjetas. Toda la tarjeta enlaza al detalle. */}
+          <ul className="space-y-3 lg:hidden">
+            {projects.map((p) => {
+              const stage = stageMeta(p.etapa)
+              return (
+                <li key={p.id}>
+                  <ListCard
+                    href={`/proyectos/${p.id}`}
+                    ariaLabel={`Proyecto ${p.nombre}`}
+                    title={p.nombre}
+                    badge={
+                      <>
+                        <Badge tone={stage.tone}>{stage.label}</Badge>
+                        {!p.isActive && <Badge tone="gray">Inactivo</Badge>}
+                      </>
+                    }
+                    fields={[
+                      { label: 'Cliente', value: p.clientName },
+                      { label: 'Responsable', value: p.responsableName },
+                      { label: 'Progreso', full: true, value: <ProgressBar value={p.progreso} /> },
+                    ]}
+                    actions={
+                      <ActionMenu
+                        label={`Acciones de ${p.nombre}`}
+                        items={[
+                          canWrite && { label: 'Editar', onClick: () => openEdit(p) },
+                          { label: 'Etapa y progreso', onClick: () => setStageProject(p) },
+                          canDelete &&
+                            p.isActive && { label: 'Eliminar', tone: 'danger', onClick: () => setToDelete(p) },
+                        ]}
+                      />
+                    }
+                  />
+                </li>
+              )
+            })}
+          </ul>
+
+          {/* DESKTOP (>= lg): tabla idéntica. */}
+          <div className="hidden overflow-hidden rounded-card border border-edge bg-surface shadow-card lg:block">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-edge-soft text-xs uppercase tracking-wide text-muted">

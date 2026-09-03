@@ -14,22 +14,33 @@ import { Link } from 'react-router-dom'
 //  - href:     si se pasa, TODA la tarjeta enlaza ahí (patrón "stretched link"): el enlace
 //              cubre la tarjeta pero las `actions` quedan por encima (z superior) y siguen
 //              siendo clicables. Sin `href`, la tarjeta no navega (ej. Clientes).
-//  - ariaLabel: etiqueta accesible del enlace de tarjeta.
-export default function ListCard({ leading, title, badge, fields = [], actions, href, ariaLabel }) {
+//  - onClick:  alternativa a `href` cuando el "detalle" es un MODAL (no una ruta), ej.
+//              Solicitudes: toda la tarjeta lo abre. Mismo overlay que `href`, pero <button>.
+//  - ariaLabel: etiqueta accesible del enlace/botón de tarjeta.
+export default function ListCard({ leading, title, badge, fields = [], actions, href, onClick, ariaLabel }) {
+  const clickable = !!href || !!onClick
   return (
     <div
       className={`relative rounded-card border border-edge bg-surface p-4 shadow-card ${
-        href ? 'transition-colors hover:bg-edge-soft/40' : ''
+        clickable ? 'transition-colors hover:bg-edge-soft/40' : ''
       }`}
     >
-      {href && (
-        // Enlace estirado sobre toda la tarjeta. Va debajo de las acciones (que llevan z-10).
+      {/* Overlay estirado sobre toda la tarjeta (enlace o botón). Va DEBAJO de las acciones
+          (que llevan z-10), para que el kebab siga funcionando. */}
+      {href ? (
         <Link
           to={href}
           aria-label={ariaLabel}
           className="absolute inset-0 rounded-card focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40"
         />
-      )}
+      ) : onClick ? (
+        <button
+          type="button"
+          onClick={onClick}
+          aria-label={ariaLabel}
+          className="absolute inset-0 rounded-card focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40"
+        />
+      ) : null}
 
       <div className="flex items-start gap-3">
         {leading && <div className="shrink-0">{leading}</div>}

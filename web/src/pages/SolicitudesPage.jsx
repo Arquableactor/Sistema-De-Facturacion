@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Topbar from '../components/layout/Topbar.jsx'
 import Button from '../components/ui/Button.jsx'
 import Badge from '../components/ui/Badge.jsx'
+import ListCard from '../components/ui/ListCard.jsx'
 import DataState from '../components/data/DataState.jsx'
 import { useToast } from '../components/ui/Toast.jsx'
 import { useAuth } from '../auth/AuthContext.jsx'
@@ -98,7 +99,38 @@ export default function SolicitudesPage() {
               : 'No hay solicitudes todavía. Llegan desde el formulario público /solicitud.'
           }
         >
-          <div className="overflow-hidden rounded-card border border-edge bg-surface shadow-card">
+          {/* MÓVIL (< lg): tarjetas. Toda la tarjeta abre el detalle (modal). */}
+          <ul className="space-y-3 lg:hidden">
+            {solicitudes.map((s) => {
+              const est = estadoMeta(s.estado)
+              return (
+                <li key={s.id}>
+                  <ListCard
+                    onClick={() => setDetalleId(s.id)}
+                    ariaLabel={`Ver solicitud de ${s.nombre}`}
+                    title={s.nombre}
+                    badge={<Badge tone={est.tone}>{est.label}</Badge>}
+                    fields={[
+                      {
+                        label: 'Documento',
+                        full: true,
+                        value: (
+                          <>
+                            <span className="text-faint">{docLabel(s.documentType)}</span> {s.documentNumber}
+                          </>
+                        ),
+                      },
+                      { label: 'Teléfono', value: fmtPhone(s.phone) },
+                      { label: 'Consumo est.', value: `${s.consumoEstimadoKwhDia} kWh/día` },
+                    ]}
+                  />
+                </li>
+              )
+            })}
+          </ul>
+
+          {/* DESKTOP (>= lg): tabla idéntica. */}
+          <div className="hidden overflow-hidden rounded-card border border-edge bg-surface shadow-card lg:block">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-edge-soft text-xs uppercase tracking-wide text-muted">

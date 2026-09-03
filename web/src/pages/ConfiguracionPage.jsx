@@ -2,6 +2,8 @@ import { useState } from 'react'
 import Topbar from '../components/layout/Topbar.jsx'
 import Button from '../components/ui/Button.jsx'
 import Badge from '../components/ui/Badge.jsx'
+import ActionMenu from '../components/ui/ActionMenu.jsx'
+import ListCard from '../components/ui/ListCard.jsx'
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx'
 import DataState from '../components/data/DataState.jsx'
 import { useToast } from '../components/ui/Toast.jsx'
@@ -83,7 +85,58 @@ export default function ConfiguracionPage() {
           onRetry={reload}
           emptyText="No hay secuencias NCF. Registra la primera con «Nueva secuencia»."
         >
-          <div className="overflow-hidden rounded-card border border-edge bg-surface shadow-card">
+          {/* MÓVIL (< lg): tarjetas. */}
+          <ul className="space-y-3 lg:hidden">
+            {items.map((s) => {
+              const est = estadoMeta(s.estado)
+              return (
+                <li key={s.id}>
+                  <ListCard
+                    title={s.type}
+                    badge={<Badge tone={est.tone}>{est.label}</Badge>}
+                    fields={[
+                      {
+                        label: 'N° autorización',
+                        full: true,
+                        value: <span className="font-mono">{s.numeroAutorizacion || '—'}</span>,
+                      },
+                      {
+                        label: 'Rango',
+                        full: true,
+                        value: (
+                          <span className="tabular">
+                            {s.startNumber.toLocaleString('es-DO')} – {s.maxNumber.toLocaleString('es-DO')}
+                          </span>
+                        ),
+                      },
+                      {
+                        label: 'Usados / Restantes',
+                        full: true,
+                        value: <UsageBar usados={s.usados} restantes={s.restantes} />,
+                      },
+                      {
+                        label: 'Vence',
+                        full: true,
+                        value: <VenceCell fecha={s.fechaVencimiento} dias={s.diasParaVencer} />,
+                      },
+                    ]}
+                    actions={
+                      <ActionMenu
+                        label={`Acciones de ${s.type}`}
+                        items={[
+                          { label: 'Editar', onClick: () => openEdit(s) },
+                          s.isActive && { label: 'Desactivar', tone: 'danger', onClick: () => setToDeactivate(s) },
+                        ]}
+                      />
+                    }
+                  />
+                </li>
+              )
+            })}
+          </ul>
+
+          {/* DESKTOP (>= lg): tabla idéntica. */}
+          <div className="hidden overflow-hidden rounded-card border border-edge bg-surface shadow-card lg:block">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-edge-soft text-xs uppercase tracking-wide text-muted">

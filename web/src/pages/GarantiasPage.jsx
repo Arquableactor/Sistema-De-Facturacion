@@ -1,8 +1,10 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Topbar from '../components/layout/Topbar.jsx'
 import Button from '../components/ui/Button.jsx'
 import Badge from '../components/ui/Badge.jsx'
+import ActionMenu from '../components/ui/ActionMenu.jsx'
+import ListCard from '../components/ui/ListCard.jsx'
 import Spinner from '../components/ui/Spinner.jsx'
 import DataState from '../components/data/DataState.jsx'
 import { useToast } from '../components/ui/Toast.jsx'
@@ -13,6 +15,7 @@ import { warrantyStatusMeta } from './warranties/warrantyMeta.js'
 
 export default function GarantiasPage() {
   const toast = useToast()
+  const navigate = useNavigate()
 
   // Búsqueda por serial: estado propio, se dispara al buscar (no al montar).
   const [serial, setSerial] = useState('')
@@ -142,7 +145,41 @@ export default function GarantiasPage() {
             onRetry={reload}
             emptyText="No hay garantías generadas aún."
           >
-            <div className="overflow-hidden rounded-card border border-edge bg-surface shadow-card">
+            {/* MÓVIL (< lg): tarjetas. */}
+            <ul className="space-y-3 lg:hidden">
+              {warranties.map((w) => {
+                const st = warrantyStatusMeta(w.status)
+                return (
+                  <li key={w.id}>
+                    <ListCard
+                      title={w.warrantyNumber}
+                      badge={<Badge tone={st.tone}>{st.label}</Badge>}
+                      fields={[
+                        { label: 'Cliente', value: w.clientName, full: true },
+                        { label: 'Proyecto', value: w.projectNombre, full: true },
+                        {
+                          label: 'Vigencia',
+                          full: true,
+                          value: `${date(w.startDate)} → ${date(w.endDate)}`,
+                        },
+                      ]}
+                      actions={
+                        <ActionMenu
+                          label={`Acciones de ${w.warrantyNumber}`}
+                          items={[
+                            { label: 'Descargar PDF', onClick: () => onPdf(w) },
+                            { label: 'Ver proyecto', onClick: () => navigate(`/proyectos/${w.projectId}`) },
+                          ]}
+                        />
+                      }
+                    />
+                  </li>
+                )
+              })}
+            </ul>
+
+            {/* DESKTOP (>= lg): tabla idéntica. */}
+            <div className="hidden overflow-hidden rounded-card border border-edge bg-surface shadow-card lg:block">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-edge-soft text-xs uppercase tracking-wide text-muted">
