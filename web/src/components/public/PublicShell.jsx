@@ -22,6 +22,7 @@ const WIDTHS = {
   md: 'max-w-md',
   wide: 'max-w-md sm:max-w-2xl lg:max-w-5xl',
   landing: 'max-w-md sm:max-w-3xl lg:max-w-6xl',
+  doc: 'max-w-2xl', // documentos legales: columna angosta = buen ancho de lectura
 }
 
 // `stickyBar`: contenido que se ancla al fondo SOLO en móvil/tablet. En desktop no hace

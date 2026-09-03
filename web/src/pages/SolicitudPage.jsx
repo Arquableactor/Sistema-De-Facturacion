@@ -66,6 +66,9 @@ export default function SolicitudPage() {
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [resultado, setResultado] = useState(null)
+  // Aceptación de legales: SOLO cliente (bloquea el submit). NO se manda al backend en esta
+  // sesión — el payload no la incluye y la entidad no cambia.
+  const [acepta, setAcepta] = useState(false)
 
   const lista = appliances || []
   const porId = useMemo(() => new Map(lista.map((a) => [a.id, a])), [lista])
@@ -128,6 +131,7 @@ export default function SolicitudPage() {
       }
     }
     if (marcados === 0) e.equipos = 'Marca al menos un equipo para estimar tu consumo.'
+    if (!acepta) e.acepta = 'Debes aceptar la Política de Privacidad y los Términos y Condiciones.'
     return e
   }
 
@@ -189,6 +193,7 @@ export default function SolicitudPage() {
             setForm(EMPTY)
             setSeleccion({})
             setErrors({})
+            setAcepta(false)
           }}
         />
       </PublicShell>
@@ -508,6 +513,34 @@ export default function SolicitudPage() {
                 value={form.website}
                 onChange={(e) => set('website', e.target.value)}
               />
+            </div>
+
+            {/* Aceptación REQUERIDA de legales. Visible en móvil y desktop (el aside se apila
+                en móvil). Los enlaces abren en pestaña nueva para no perder el formulario a
+                medio llenar. El submit se bloquea si no está marcado (validación cliente). */}
+            <div data-error={errors.acepta ? 'true' : undefined} className="mt-3">
+              <label className="flex cursor-pointer items-start gap-2.5 text-xs text-muted">
+                <input
+                  type="checkbox"
+                  checked={acepta}
+                  onChange={(e) => setAcepta(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-edge text-primary focus:ring-primary/30"
+                />
+                <span>
+                  Acepto la{' '}
+                  <a href="/privacidad" target="_blank" rel="noreferrer" className="font-medium text-primary hover:underline">
+                    Política de Privacidad
+                  </a>{' '}
+                  y los{' '}
+                  <a href="/terminos" target="_blank" rel="noreferrer" className="font-medium text-primary hover:underline">
+                    Términos y Condiciones
+                  </a>
+                  .
+                </span>
+              </label>
+              {errors.acepta && (
+                <p className="mt-1 text-xs font-medium text-danger-strong">{errors.acepta}</p>
+              )}
             </div>
 
             {/* En móvil este botón sobra: el de la barra fija hace lo mismo. */}

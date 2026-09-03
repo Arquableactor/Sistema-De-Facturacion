@@ -388,9 +388,18 @@ function Footer() {
         </div>
       </div>
 
-      <div className="mt-8 flex flex-col gap-1 border-t border-edge pt-5 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-8 flex flex-col gap-3 border-t border-edge pt-5 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
         <span>© {year} APE Multiservicios SRL. Todos los derechos reservados.</span>
-        <span>RNC {CONTACTO.rnc}</span>
+        {/* Enlaces legales, discretos como en cualquier sitio. */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+          <Link to="/privacidad" className="transition-colors hover:text-brand-text">
+            Política de Privacidad
+          </Link>
+          <Link to="/terminos" className="transition-colors hover:text-brand-text">
+            Términos y Condiciones
+          </Link>
+          <span>RNC {CONTACTO.rnc}</span>
+        </div>
       </div>
     </footer>
   )

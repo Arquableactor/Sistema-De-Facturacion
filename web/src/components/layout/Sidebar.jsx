@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext.jsx'
 import BrandMark from '../ui/BrandMark.jsx'
 import ThemeToggle from '../ui/ThemeToggle.jsx'
+import AboutModal from './AboutModal.jsx'
 import {
   IconDashboard,
   IconProjects,
@@ -35,6 +37,7 @@ const NAV = [
 export default function Sidebar({ collapsed, onToggle }) {
   const { user, logout, can } = useAuth()
   const navigate = useNavigate()
+  const [aboutOpen, setAboutOpen] = useState(false)
   const nav = NAV.filter((item) => !item.action || can(item.action))
 
   // Al cerrar sesión mandamos a la landing pública (no al login): es la puerta de
@@ -124,6 +127,13 @@ export default function Sidebar({ collapsed, onToggle }) {
           <div className="space-y-1">
             <ThemeToggle variant="onBrand" compact />
             <button
+              onClick={() => setAboutOpen(true)}
+              title="Acerca de"
+              className="grid h-10 w-full place-items-center rounded-btn text-white/55 hover:bg-white/10 hover:text-white"
+            >
+              <InfoIcon />
+            </button>
+            <button
               onClick={handleLogout}
               title="Cerrar sesión"
               className="grid h-10 w-full place-items-center rounded-btn text-white/70 hover:bg-white/10 hover:text-white"
@@ -151,9 +161,29 @@ export default function Sidebar({ collapsed, onToggle }) {
               <IconLogout width={16} height={16} />
               Cerrar sesión
             </button>
+            {/* Aviso de licencia, discreto (no intrusivo, no "acepta para continuar"). */}
+            <button
+              onClick={() => setAboutOpen(true)}
+              className="mt-2 flex w-full items-center justify-center gap-1.5 text-[11px] font-medium text-white/45 transition-colors hover:text-white/75"
+            >
+              <InfoIcon width={13} height={13} />
+              Acerca de
+            </button>
           </div>
         )}
       </div>
+
+      <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
     </aside>
+  )
+}
+
+function InfoIcon({ width = 18, height = 18 }) {
+  return (
+    <svg width={width} height={height} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5M12 8h.01" />
+    </svg>
   )
 }

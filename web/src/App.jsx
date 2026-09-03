@@ -23,6 +23,8 @@ import CatalogoPage from './pages/CatalogoPage.jsx'
 import ConfiguracionPage from './pages/ConfiguracionPage.jsx'
 import PublicVerifyPage from './pages/PublicVerifyPage.jsx'
 import SolicitudPage from './pages/SolicitudPage.jsx'
+import PrivacidadPage from './pages/PrivacidadPage.jsx'
+import TerminosPage from './pages/TerminosPage.jsx'
 
 // Redirección de URL desconocida según haya sesión o no.
 function CatchAllRedirect() {
@@ -44,6 +46,9 @@ export default function App() {
           <Route path="/verificar/:code" element={<PublicVerifyPage />} />
           {/* Captación: el link que APE comparte por WhatsApp. */}
           <Route path="/solicitud" element={<SolicitudPage />} />
+          {/* Legales públicas (standalone, como /verificar): texto placeholder. */}
+          <Route path="/privacidad" element={<PrivacidadPage />} />
+          <Route path="/terminos" element={<TerminosPage />} />
 
           {/* Protegidas: requieren token */}
           <Route element={<ProtectedRoute />}>
