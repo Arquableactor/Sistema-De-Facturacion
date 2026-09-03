@@ -13,7 +13,8 @@ public abstract class ApiControllerBase : ControllerBase
     {
         ResultStatus.NotFound => NotFound(new ErrorResponse(result.Error ?? "No encontrado.")),
         ResultStatus.Conflict => Conflict(new ErrorResponse(result.Error ?? "Conflicto.")),
-        ResultStatus.Validation => BadRequest(new ErrorResponse(result.Error ?? "Solicitud inválida.")),
+        // details (si vienen) se serializan como { "campo": ["…"] }, igual que el 400 del binder.
+        ResultStatus.Validation => BadRequest(new ErrorResponse(result.Error ?? "Solicitud inválida.", result.Details)),
         _ => StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse("Error interno."))
     };
 }

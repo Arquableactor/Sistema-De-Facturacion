@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react'
 import Modal from '../../components/ui/Modal.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Field from '../../components/ui/Field.jsx'
+import PasswordRequirements from '../../components/ui/PasswordRequirements.jsx'
 import { resetUserPassword } from '../../api/usersApi.js'
+import { mapDetails } from '../../lib/apiErrors.js'
+import { isPasswordStrong } from '../../lib/passwordPolicy.js'
 
 // Restablecer la contraseña de un usuario (acción sensible, separada de la edición).
 // Pide la nueva contraseña dos veces para evitar errores de tipeo.
@@ -24,7 +27,7 @@ export default function ResetPasswordModal({ open, user, onClose, onDone }) {
   async function onSubmit(e) {
     e.preventDefault()
     const errs = {}
-    if (password.length < 8) errs.password = 'La contraseña debe tener al menos 8 caracteres.'
+    if (!isPasswordStrong(password)) errs.password = 'La contraseña no cumple los requisitos de seguridad.'
     if (confirm !== password) errs.confirm = 'Las contraseñas no coinciden.'
     setErrors(errs)
     setFormError('')
@@ -35,7 +38,14 @@ export default function ResetPasswordModal({ open, user, onClose, onDone }) {
       await resetUserPassword(user.id, password)
       onDone()
     } catch (err) {
-      setFormError(err.message || 'No se pudo restablecer la contraseña.')
+      if (err.status === 400 && err.details) {
+        // Política de contraseña del backend: mapea "newPassword" al campo mostrado.
+        const mapped = mapDetails(err.details)
+        if (mapped.newPassword) setErrors((prev) => ({ ...prev, password: mapped.newPassword }))
+        setFormError(err.message || 'Revisa los campos marcados.')
+      } else {
+        setFormError(err.message || 'No se pudo restablecer la contraseña.')
+      }
     } finally {
       setSubmitting(false)
     }
@@ -70,15 +80,18 @@ export default function ResetPasswordModal({ open, user, onClose, onDone }) {
           Nueva contraseña para <span className="font-medium text-brand-text">{user?.fullName}</span>.
         </p>
 
-        <Field
-          id="new-password"
-          label="Nueva contraseña"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          error={errors.password}
-          placeholder="Mínimo 8 caracteres"
-        />
+        <div>
+          <Field
+            id="new-password"
+            label="Nueva contraseña"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            error={errors.password}
+            placeholder="Contraseña segura"
+          />
+          <PasswordRequirements value={password} />
+        </div>
 
         <Field
           id="confirm-password"

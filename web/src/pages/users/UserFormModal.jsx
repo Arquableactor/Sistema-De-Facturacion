@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import Modal from '../../components/ui/Modal.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Field from '../../components/ui/Field.jsx'
+import PasswordRequirements from '../../components/ui/PasswordRequirements.jsx'
 import { createUser, updateUser } from '../../api/usersApi.js'
 import { ROLE_OPTIONS } from '../../auth/permissions.js'
 import { mapDetails } from '../../lib/apiErrors.js'
+import { isPasswordStrong } from '../../lib/passwordPolicy.js'
 
 const EMPTY = { fullName: '', email: '', password: '', role: '', isActive: 'true' }
 
@@ -21,7 +23,7 @@ function validate(f, isEdit) {
   if (!f.email.trim()) e.email = 'El correo es obligatorio.'
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) e.email = 'Correo electrónico inválido.'
   if (!f.role) e.role = 'Selecciona un rol.'
-  if (!isEdit && f.password.length < 8) e.password = 'La contraseña debe tener al menos 8 caracteres.'
+  if (!isEdit && !isPasswordStrong(f.password)) e.password = 'La contraseña no cumple los requisitos de seguridad.'
   return e
 }
 
@@ -143,15 +145,18 @@ export default function UserFormModal({ open, user, onClose, onSaved }) {
         />
 
         {!isEdit && (
-          <Field
-            id="password"
-            label="Contraseña"
-            type="password"
-            value={form.password}
-            onChange={(e) => set('password', e.target.value)}
-            error={errors.password}
-            placeholder="Mínimo 8 caracteres"
-          />
+          <div>
+            <Field
+              id="password"
+              label="Contraseña"
+              type="password"
+              value={form.password}
+              onChange={(e) => set('password', e.target.value)}
+              error={errors.password}
+              placeholder="Contraseña segura"
+            />
+            <PasswordRequirements value={form.password} />
+          </div>
         )}
 
         <div className={isEdit ? 'grid grid-cols-2 gap-3' : ''}>

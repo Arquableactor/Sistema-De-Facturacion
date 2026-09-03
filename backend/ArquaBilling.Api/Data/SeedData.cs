@@ -1,3 +1,4 @@
+using ArquaBilling.Api.Common;
 using ArquaBilling.Api.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -47,6 +48,13 @@ public static class SeedData
                     "está definida. Setéala con una contraseña fuerte y vuelve a arrancar con " +
                     "SEED_ESSENTIAL=true. Es preferible quedarse sin admin a crearlo con una " +
                     "contraseña conocida.");
+            }
+            else if (PasswordPolicy.Validate(adminPassword) is { Count: > 0 } pwErrors)
+            {
+                logger.LogError(
+                    "Seed esencial: NO se creó el admin porque ADMIN_INITIAL_PASSWORD no cumple la " +
+                    "política de contraseñas: {Errores} Corrígela y vuelve a arrancar con " +
+                    "SEED_ESSENTIAL=true.", string.Join(" ", pwErrors));
             }
             else
             {

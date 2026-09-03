@@ -52,6 +52,16 @@ public class UserService : IUserService
 
     public async Task<ServiceResult<UserManageResponse>> CreateAsync(UserCreateRequest request)
     {
+        // Fortaleza de la contraseña NUEVA (fuente única: PasswordPolicy). Antes del check de
+        // correo: no necesita la base y da feedback por campo si falla.
+        var pwErrors = PasswordPolicy.Validate(request.Password);
+        if (pwErrors.Count > 0)
+        {
+            return ServiceResult<UserManageResponse>.Validation(
+                "La contraseña no cumple los requisitos de seguridad.",
+                new Dictionary<string, string[]> { ["password"] = pwErrors.ToArray() });
+        }
+
         var email = request.Email.Trim().ToLower();
         if (await _db.Users.AnyAsync(u => u.Email.ToLower() == email))
         {
@@ -141,6 +151,16 @@ public class UserService : IUserService
 
     public async Task<ServiceResult> ResetPasswordAsync(int id, string newPassword)
     {
+        // Misma política que al crear (fuente única). El campo se llama "newPassword" para que
+        // el front lo mapee a su input de nueva contraseña.
+        var pwErrors = PasswordPolicy.Validate(newPassword);
+        if (pwErrors.Count > 0)
+        {
+            return ServiceResult.Validation(
+                "La contraseña no cumple los requisitos de seguridad.",
+                new Dictionary<string, string[]> { ["newPassword"] = pwErrors.ToArray() });
+        }
+
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == id);
         if (user is null)
         {

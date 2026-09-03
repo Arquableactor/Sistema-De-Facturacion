@@ -17,9 +17,9 @@ public class UserCreateRequest
     [MaxLength(256)]
     public string Email { get; set; } = null!;
 
-    // Regla de contraseña: mínimo 8 caracteres (solo longitud).
+    // La FORTALEZA (longitud + composición) la valida PasswordPolicy en el servicio (fuente
+    // única). Aquí solo [Required] y un tope de tamaño (evita hashear entradas gigantes).
     [Required]
-    [MinLength(8, ErrorMessage = "La contraseña debe tener al menos 8 caracteres.")]
     [MaxLength(128)]
     public string Password { get; set; } = null!;
 
