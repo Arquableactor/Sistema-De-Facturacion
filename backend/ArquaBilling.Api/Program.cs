@@ -11,10 +11,20 @@ using Microsoft.AspNetCore.Authorization; // IAuthorizationMiddlewareResultHandl
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Railway (y otros PaaS) inyectan el puerto por la env var PORT y esperan que la app escuche
+// en 0.0.0.0:$PORT. En DEV no existe PORT -> no se toca el binding (sigue con launchSettings /
+// ASPNETCORE_URLS como hoy).
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port))
+{
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+}
 
 // ---------------------------------------------------------------------------
 // Services (DI container)
@@ -127,20 +137,50 @@ builder.Services.AddAuthorization();
 // 403 con envelope { message }: sin esto, un rol insuficiente devuelve un 403 vacío.
 builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, ForbiddenResultHandler>();
 
-// TODO: Configure CORS (allow the React web app and the Flutter mobile app).
-// builder.Services.AddCors(options =>
-//     options.AddDefaultPolicy(policy => policy.AllowAnyHeader().AllowAnyMethod()));
+// CORS: en PROD (front y back en dominios separados) los orígenes permitidos vienen por env
+// var Cors__AllowedOrigins (coma-separados). En DEV queda vacío y no molesta: el proxy de Vite
+// hace mismo-origen, así que el navegador nunca dispara una petición cross-origin.
+builder.Services.AddCors(options =>
+    options.AddDefaultPolicy(policy => policy
+        .WithOrigins(
+            builder.Configuration["Cors:AllowedOrigins"]
+                ?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            ?? Array.Empty<string>())
+        .AllowAnyHeader()
+        .AllowAnyMethod()));
 
 var app = builder.Build();
 
-// Seed inicial (solo en Development). La migración se aplica aparte con dotnet ef;
-// aquí solo se insertan datos. Es idempotente: no duplica si ya hay datos.
-if (app.Environment.IsDevelopment())
+// Seed inicial. La migración se aplica APARTE (manual con `dotnet ef database update`); aquí
+// solo se insertan datos, de forma idempotente.
+//  - DEV: esencial (admin con contraseña por defecto local) + TODOS los datos demo.
+//  - PROD: SOLO lo esencial y SOLO si SEED_ESSENTIAL=true; el admin se protege con
+//    ADMIN_INITIAL_PASSWORD (sin ella no se crea).
 {
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var hasher = scope.ServiceProvider.GetRequiredService<PasswordHasher<User>>();
-    await SeedData.SeedAsync(db, hasher);
+    var isDev = app.Environment.IsDevelopment();
+    var seedEssentialProd = !isDev && Environment.GetEnvironmentVariable("SEED_ESSENTIAL") == "true";
+    if (isDev || seedEssentialProd)
+    {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var hasher = scope.ServiceProvider.GetRequiredService<PasswordHasher<User>>();
+        var seedLogger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Seed");
+        var adminPassword = Environment.GetEnvironmentVariable("ADMIN_INITIAL_PASSWORD");
+
+        if (isDev)
+        {
+            // Dev: admin con ADMIN_INITIAL_PASSWORD si está, si no Admin123* (comodidad local),
+            // más todos los datos demo (clientes, proyectos, equipos…).
+            await SeedData.SeedEssentialAsync(db, hasher, adminPassword ?? "Admin123*", seedLogger);
+            await SeedData.SeedDemoAsync(db, hasher);
+        }
+        else
+        {
+            // Prod: solo lo esencial (catálogo de electrodomésticos + secuencia NCF + admin).
+            // El admin se crea únicamente si ADMIN_INITIAL_PASSWORD está definida.
+            await SeedData.SeedEssentialAsync(db, hasher, adminPassword, seedLogger);
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -153,11 +193,20 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// Railway termina TLS en el borde y pasa HTTP al contenedor: la redirección a HTTPS solo
+// tiene sentido en DEV (en prod haría un warning por no saber el puerto HTTPS, o un loop).
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 // Antes de autenticar: al ser endpoints anónimos, el límite debe frenar al abusador
 // lo más temprano posible (y así un 400 de validación también consume su cuota).
 app.UseRateLimiter();
+
+// CORS antes de autenticar. En dev la política sale vacía (el proxy hace mismo-origen y no se
+// dispara CORS); en prod permite el dominio del frontend (Cors__AllowedOrigins).
+app.UseCors();
 
 // El orden importa: autenticar primero, autorizar después.
 app.UseAuthentication();

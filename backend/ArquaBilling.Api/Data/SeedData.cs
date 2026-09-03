@@ -1,20 +1,88 @@
 using ArquaBilling.Api.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace ArquaBilling.Api.Data;
 
 public static class SeedData
 {
-    // Datos iniciales. Cada bloque comprueba SU propia precondición, no una global:
-    // el catálogo de electrodomésticos llegó después que los usuarios, así que un
-    // guard único ("si ya hay usuarios, no hagas nada") lo habría dejado sin sembrar
-    // para siempre en cualquier base existente.
-    // El PasswordHasher viene de DI (mismo que usa AuthService para verificar).
-    public static async Task SeedAsync(AppDbContext db, PasswordHasher<User> hasher)
+    // Correos de los usuarios sembrados (sirven de señal de idempotencia por bloque).
+    private const string AdminEmail = "admin@arqua.local";
+    private const string VentasEmail = "ventas@arqua.local";
+    private const string TecnicoEmail = "tecnico@arqua.local";
+
+    // ===== ESENCIAL: lo que PRODUCCIÓN necesita una vez =====
+    // Catálogo de electrodomésticos (alimenta el formulario público), la secuencia NCF y el
+    // usuario admin. Cada bloque comprueba SU precondición (idempotente): así se puede correr
+    // varias veces sin duplicar, y una base existente recibe lo que le falte.
+    // El admin SOLO se crea si viene `adminPassword`: sin contraseña se omite y se loguea un
+    // error (mejor sin admin que con una contraseña conocida). El PasswordHasher viene de DI.
+    public static async Task SeedEssentialAsync(
+        AppDbContext db, PasswordHasher<User> hasher, string? adminPassword, ILogger logger)
     {
+        var now = DateTime.UtcNow;
+
         await SeedElectrodomesticosAsync(db);
-        await SeedNegocioAsync(db, hasher);
+
+        if (!await db.NcfSequences.AnyAsync())
+        {
+            db.NcfSequences.Add(new NcfSequence
+            {
+                Type = "B01",
+                CurrentNumber = 0,
+                MaxNumber = 100000,
+                IsActive = true,
+                CreatedAt = now
+            });
+            await db.SaveChangesAsync();
+        }
+
+        if (!await db.Users.AnyAsync(u => u.Email == AdminEmail))
+        {
+            if (string.IsNullOrWhiteSpace(adminPassword))
+            {
+                logger.LogError(
+                    "Seed esencial: NO se creó el usuario admin porque ADMIN_INITIAL_PASSWORD no " +
+                    "está definida. Setéala con una contraseña fuerte y vuelve a arrancar con " +
+                    "SEED_ESSENTIAL=true. Es preferible quedarse sin admin a crearlo con una " +
+                    "contraseña conocida.");
+            }
+            else
+            {
+                db.Users.Add(NuevoUsuario(hasher, "Administrador", AdminEmail, UserRole.Admin, adminPassword, now));
+                await db.SaveChangesAsync();
+                logger.LogInformation("Seed esencial: usuario admin creado ({Email}).", AdminEmail);
+            }
+        }
+    }
+
+    // ===== DEMO: todo lo ficticio, SOLO para desarrollo. NUNCA en producción =====
+    // Usuarios ventas/técnico, catálogo de productos, clientes, proyectos y equipos.
+    public static async Task SeedDemoAsync(AppDbContext db, PasswordHasher<User> hasher)
+    {
+        // Idempotente: si ya existe el usuario de ventas demo, este bloque ya corrió.
+        if (await db.Users.AnyAsync(u => u.Email == VentasEmail))
+        {
+            return;
+        }
+        // Requiere el admin (es responsable de un proyecto demo); lo crea el seed esencial.
+        var admin = await db.Users.FirstOrDefaultAsync(u => u.Email == AdminEmail);
+        if (admin is null)
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        // Las fechas de proyecto se guardan a medianoche (el front manda 'YYYY-MM-DD');
+        // sembramos igual para que los datos demo se comparen como los reales.
+        var hoy = now.Date;
+
+        var ventas = NuevoUsuario(hasher, "Laura Ventas", VentasEmail, UserRole.Sales, "Ventas123*", now);
+        var tecnico = NuevoUsuario(hasher, "Pedro Técnico", TecnicoEmail, UserRole.Technician, "Tecnico123*", now);
+        db.Users.AddRange(ventas, tecnico);
+
+        await SeedDemoNegocioAsync(db, admin, ventas, tecnico, now, hoy);
     }
 
     // ----- Bloque 1: catálogo de electrodomésticos (captación pública) -----
@@ -76,34 +144,12 @@ public static class SeedData
         await db.SaveChangesAsync();
     }
 
-    // ----- Bloque 2: usuarios, catálogo de productos, clientes y proyectos demo -----
-    private static async Task SeedNegocioAsync(AppDbContext db, PasswordHasher<User> hasher)
+    // ----- Bloque 2 (DEMO): productos, clientes, proyectos y equipos ficticios -----
+    // Recibe los usuarios ya creados (admin del seed esencial; ventas/técnico del demo). No
+    // vuelve a crear usuarios ni la secuencia NCF (esos son esenciales, ya sembrados).
+    private static async Task SeedDemoNegocioAsync(
+        AppDbContext db, User admin, User ventas, User tecnico, DateTime now, DateTime hoy)
     {
-        if (await db.Users.AnyAsync())
-        {
-            return;
-        }
-
-        var now = DateTime.UtcNow;
-        // Las fechas de proyecto se guardan a medianoche (el front manda 'YYYY-MM-DD');
-        // sembramos igual para que los datos demo se comparen como los reales.
-        var hoy = now.Date;
-
-        // ----- Usuarios: uno por rol, para poder probar la matriz de permisos -----
-        var admin = NuevoUsuario(hasher, "Administrador", "admin@arqua.local", UserRole.Admin, "Admin123*", now);
-        var ventas = NuevoUsuario(hasher, "Laura Ventas", "ventas@arqua.local", UserRole.Sales, "Ventas123*", now);
-        var tecnico = NuevoUsuario(hasher, "Pedro Técnico", "tecnico@arqua.local", UserRole.Technician, "Tecnico123*", now);
-        db.Users.AddRange(admin, ventas, tecnico);
-
-        db.NcfSequences.Add(new NcfSequence
-        {
-            Type = "B01",
-            CurrentNumber = 0,
-            MaxNumber = 100000,
-            IsActive = true,
-            CreatedAt = now
-        });
-
         // ----- Catálogo de productos (con campos de equipo) -----
         var panel = new Product
         {

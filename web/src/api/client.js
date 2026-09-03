@@ -1,5 +1,12 @@
-// Cliente central de API. Usa rutas relativas (/api/...) que el proxy de Vite
-// reenvía al backend (VITE_API_URL) -> mismo origen, sin CORS.
+// Cliente central de API.
+// - DEV: VITE_API_BASE NO se define -> API_BASE = '' -> las peticiones van a rutas relativas
+//   (/api/...) y el proxy de Vite las reenvía al backend (mismo origen, sin CORS).
+// - PROD (dominios separados): se define VITE_API_BASE con el dominio del backend en el BUILD;
+//   API_BASE lo antepone a cada ruta y el backend responde con CORS habilitado.
+// Var PROPIA (no `VITE_API_URL`, que en dev ya usa el proxy de vite.config con el mismo
+// backend): reusarla haría que en dev el cliente pegara absoluto a :5266 y rompería el proxy.
+// Toda petición pasa por request/publicRequest/getBlob, así que basta anteponer API_BASE ahí.
+const API_BASE = import.meta.env.VITE_API_BASE || ''
 
 const TOKEN_KEY = 'ape_token'
 const USER_KEY = 'ape_user'
@@ -43,7 +50,7 @@ async function request(method, path, body) {
   if (body !== undefined) headers['Content-Type'] = 'application/json'
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(path, {
+  const res = await fetch(`${API_BASE}${path}`, {
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -98,7 +105,7 @@ export async function postPublic(path, body) {
 async function publicRequest(method, path, body) {
   let res
   try {
-    res = await fetch(path, {
+    res = await fetch(`${API_BASE}${path}`, {
       method,
       headers: {
         Accept: 'application/json',
@@ -129,7 +136,7 @@ export async function getBlob(path) {
   const headers = {}
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(path, { headers })
+  const res = await fetch(`${API_BASE}${path}`, { headers })
 
   if (res.status === 401 && token) {
     clearSession()
